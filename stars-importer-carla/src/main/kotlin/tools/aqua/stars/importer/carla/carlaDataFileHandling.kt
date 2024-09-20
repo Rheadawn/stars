@@ -34,6 +34,7 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import tools.aqua.stars.data.av.dataclasses.Block
 import tools.aqua.stars.data.av.dataclasses.Segment
+import tools.aqua.stars.data.av.dataclasses.Segmentation
 import tools.aqua.stars.importer.carla.dataclasses.*
 
 /** Carla data serializer module. */
@@ -117,7 +118,8 @@ fun loadSegments(
     simulationRunsWrappers: List<CarlaSimulationRunsWrapper>,
     useEveryVehicleAsEgo: Boolean = false,
     minSegmentTickCount: Int = 10,
-    orderFilesBySeed: Boolean = false
+    orderFilesBySeed: Boolean = false,
+    segmentationBy: Segmentation = Segmentation.BY_BLOCK
 ): Sequence<Segment> {
   var simulationRunsWrapperList = simulationRunsWrappers
   // Check that every SimulationRunsWrapper has dynamic data files loaded
@@ -188,7 +190,9 @@ fun loadSegments(
               simulationRun,
               useEveryVehicleAsEgo,
               currentDynamicDataPath.fileName.toString(),
-              minSegmentTickCount))
+              minSegmentTickCount,
+              segmentationBy
+          ))
       return@generateSequence segmentBuffer.removeFirst()
     }
     // If there are no Segments nor Files to process, return null to indicate the end of the
