@@ -20,6 +20,8 @@ package tools.aqua.stars.importer.carla
 import tools.aqua.stars.data.av.dataclasses.*
 import tools.aqua.stars.importer.carla.dataclasses.JsonTickData
 import tools.aqua.stars.importer.carla.dataclasses.JsonVehicle
+import kotlin.math.abs
+import kotlin.math.ceil
 
 /**
  * Returns the name of the map.
@@ -247,15 +249,17 @@ fun sliceRunIntoSegments(
 
     return when (segmentationBy.type) {
         Segmentation.Type.BY_BLOCK -> segmentByBlock(simulationRuns, minSegmentTickCount)
-        Segmentation.Type.NONE -> TODO()
-        Segmentation.Type.EVEN_SIZE -> TODO()
-        Segmentation.Type.BY_LENGTH -> TODO()
-        Segmentation.Type.BY_TICKS -> TODO()
+        Segmentation.Type.NONE -> noSegmentation(simulationRuns, minSegmentTickCount)
+        Segmentation.Type.EVEN_SIZE -> segmentWithEvenSize(simulationRuns, minSegmentTickCount, segmentationBy.value)
+        Segmentation.Type.BY_LENGTH -> segmentByLength(simulationRuns, minSegmentTickCount, segmentationBy.value)
+        Segmentation.Type.BY_TICKS -> segmentByTicks(simulationRuns, minSegmentTickCount, segmentationBy.value)
     }
-
 }
 
-fun segmentByBlock(simulationRuns: MutableList<Pair<String, List<TickData>>>, minSegmentTickCount: Int): MutableList<Segment> {
+fun segmentByBlock(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int
+): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
 
     simulationRuns.forEach { (simulationRunId, simulationRun) ->
@@ -281,6 +285,140 @@ fun segmentByBlock(simulationRuns: MutableList<Pair<String, List<TickData>>>, mi
             if (mainSegment.size >= minSegmentTickCount) {
                 segments +=
                     Segment(mainSegment, simulationRunId = simulationRunId, segmentSource = simulationRunId)
+            }
+        }
+    }
+
+    return segments
+}
+
+fun noSegmentation(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+
+    simulationRuns.forEach { (simulationRunId, simulationRun) ->
+        if (simulationRun.size >= minSegmentTickCount) {
+            segments += Segment(
+                simulationRun.map { it.clone() },
+                simulationRunId = simulationRunId,
+                segmentSource = simulationRunId
+            )
+        }
+    }
+
+    return segments
+}
+
+fun segmentWithEvenSize(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    segmentationSize: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
+
+    blocks.forEach { originalSegment ->
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction }) {
+            segments += originalSegment
+        } else {
+            val originalSize = originalSegment.tickData.size
+            val segmentLength = originalSize / segmentationSize
+
+            for (i in 0 until segmentationSize) {
+                val start = i * segmentLength
+                val end = if (i == segmentationSize - 1) originalSize else (i + 1) * segmentLength
+                val segmentTickData = originalSegment.tickData.subList(start, end)
+                if (segmentTickData.size >= minSegmentTickCount) {
+                    segments += Segment(
+                        segmentTickData,
+                        simulationRunId = originalSegment.simulationRunId,
+                        segmentSource = originalSegment.segmentSource
+                    )
+                } else {
+                    println("Segment too short: Id(${originalSegment.simulationRunId}) - Size(${segmentTickData.size})")
+
+                }
+            }
+        }
+    }
+
+    return segments
+}
+
+fun segmentByLength(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    segmentLength: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
+
+    blocks.forEach { originalSegment ->
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction }) {
+            segments += originalSegment
+        } else {
+            var previousPositionOnLane = originalSegment.tickData.first().egoVehicle.positionOnLane
+            var distanceTraveled = 0.0
+            var lastCutIndex = 0
+
+            for (i in 1 until originalSegment.tickData.size) {
+                val currentPositionOnLane = originalSegment.tickData[i].egoVehicle.positionOnLane
+                distanceTraveled += abs(currentPositionOnLane - previousPositionOnLane)
+                if (distanceTraveled >= segmentLength) {
+                    val segmentTickData = originalSegment.tickData.subList(lastCutIndex, i)
+                    lastCutIndex = i
+                    if (segmentTickData.size >= minSegmentTickCount) {
+                        segments += Segment(segmentTickData, simulationRunId = originalSegment.simulationRunId, segmentSource = originalSegment.segmentSource)
+                    } else {
+                        println("Segment too short: Id(${originalSegment.simulationRunId}) - Size(${segmentTickData.size})")
+                    }
+                    previousPositionOnLane = currentPositionOnLane
+                    distanceTraveled = 0.0
+                }
+            }
+
+            val segmentTickData = originalSegment.tickData.subList(lastCutIndex, originalSegment.tickData.size)
+            if (segmentTickData.size >= minSegmentTickCount) {
+                segments += Segment(segmentTickData, simulationRunId = originalSegment.simulationRunId, segmentSource = originalSegment.segmentSource)
+            } else {
+                println("Last segment too short: Id(${originalSegment.simulationRunId}) - Size(${segmentTickData.size})")
+            }
+        }
+    }
+
+    return segments
+}
+
+fun segmentByTicks(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    segmentTickCount: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
+
+    blocks.forEach { originalSegment ->
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction }) {
+            segments += originalSegment
+        } else {
+            val originalSize = originalSegment.tickData.size
+            val segmentCount = ceil(originalSize.toDouble() / segmentTickCount.toDouble()).toInt()
+
+            for (i in 0 until segmentCount) {
+                val start = i * segmentTickCount
+                val end = if (i == segmentCount - 1) originalSize else (i + 1) * segmentTickCount
+                val segmentTickData = originalSegment.tickData.subList(start, end)
+                if (segmentTickData.size >= minSegmentTickCount) {
+                    segments += Segment(
+                        segmentTickData,
+                        simulationRunId = originalSegment.simulationRunId,
+                        segmentSource = originalSegment.segmentSource
+                    )
+                } else {
+                    println("Segment too short: Id(${originalSegment.simulationRunId}) - Size(${segmentTickData.size})")
+                }
             }
         }
     }

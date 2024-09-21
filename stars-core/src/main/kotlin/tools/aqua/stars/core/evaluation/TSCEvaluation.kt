@@ -105,7 +105,7 @@ class TSCEvaluation<
         val segmentsEvaluationTime = measureTime {
           segments
               .forEachIndexed { index, segment ->
-                print("\rCurrently evaluating segment $index")
+                println("\rCurrently evaluating segment $index")
                 val segmentEvaluationTime = measureTime {
                   // Run the "evaluate" function for all SegmentMetricProviders on the current
                   // segment
