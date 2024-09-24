@@ -250,9 +250,11 @@ fun sliceRunIntoSegments(
     return when (segmentationBy.type) {
         Segmentation.Type.BY_BLOCK -> segmentByBlock(simulationRuns, minSegmentTickCount)
         Segmentation.Type.NONE -> noSegmentation(simulationRuns, minSegmentTickCount)
-        Segmentation.Type.EVEN_SIZE -> segmentWithEvenSize(simulationRuns, minSegmentTickCount, segmentationBy.value)
-        Segmentation.Type.BY_LENGTH -> segmentByLength(simulationRuns, minSegmentTickCount, segmentationBy.value)
-        Segmentation.Type.BY_TICKS -> segmentByTicks(simulationRuns, minSegmentTickCount, segmentationBy.value)
+        Segmentation.Type.EVEN_SIZE -> segmentWithEvenSize(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
+        Segmentation.Type.BY_LENGTH -> segmentByLength(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
+        Segmentation.Type.BY_TICKS -> segmentByTicks(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
+        Segmentation.Type.SLIDING_WINDOW -> slidingWindow(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
+        Segmentation.Type.SLIDING_WINDOW_BY_BLOCK -> slidingWindowInBlock(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
     }
 }
 
@@ -314,13 +316,14 @@ fun noSegmentation(
 fun segmentWithEvenSize(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     minSegmentTickCount: Int,
-    segmentationSize: Int
+    segmentationSize: Int,
+    segmentJunctions: Boolean
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
     val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
 
     blocks.forEach { originalSegment ->
-        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction }) {
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction } && !segmentJunctions) {
             segments += originalSegment
         } else {
             val originalSize = originalSegment.tickData.size
@@ -350,13 +353,14 @@ fun segmentWithEvenSize(
 fun segmentByLength(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     minSegmentTickCount: Int,
-    segmentLength: Int
+    segmentLength: Int,
+    segmentJunctions: Boolean
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
     val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
 
     blocks.forEach { originalSegment ->
-        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction }) {
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction } && !segmentJunctions) {
             segments += originalSegment
         } else {
             var previousPositionOnLane = originalSegment.tickData.first().egoVehicle.positionOnLane
@@ -394,13 +398,14 @@ fun segmentByLength(
 fun segmentByTicks(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     minSegmentTickCount: Int,
-    segmentTickCount: Int
+    segmentTickCount: Int,
+    segmentJunctions: Boolean
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
     val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
 
     blocks.forEach { originalSegment ->
-        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction }) {
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction } && !segmentJunctions) {
             segments += originalSegment
         } else {
             val originalSize = originalSegment.tickData.size
@@ -418,6 +423,80 @@ fun segmentByTicks(
                     )
                 } else {
                     println("Segment too short: Id(${originalSegment.simulationRunId}) - Size(${segmentTickData.size})")
+                }
+            }
+        }
+    }
+
+    return segments
+}
+
+fun slidingWindow(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    size: Int,
+    segmentJunctions: Boolean
+): MutableList<Segment> {
+    var windowSize = size
+    if(windowSize < minSegmentTickCount){
+        println("ADJUSTING WINDOW SIZE: Window size is smaller than minSegmentTickCount. Adjusting window size to $minSegmentTickCount.")
+        windowSize = minSegmentTickCount
+    }
+
+    val segments = mutableListOf<Segment>()
+    if(!segmentJunctions){
+        val junctions = segmentByBlock(simulationRuns, minSegmentTickCount).filter { it.tickData.first().egoVehicle.lane.road.isJunction }
+        segments += junctions
+    }
+
+    simulationRuns.forEach { (simulationRunId, simulationRun) ->
+        val endOfRun = simulationRun.size
+
+        simulationRun.forEachIndexed { index, _ ->
+            if(index+windowSize >= endOfRun){
+                return@forEachIndexed
+            }
+
+            val segmentTickData = simulationRun.subList(index, index + windowSize)
+            if (segmentTickData.size >= minSegmentTickCount) {
+                segments += Segment(segmentTickData, simulationRunId = simulationRunId, segmentSource = simulationRunId)
+            }
+        }
+    }
+
+    return segments
+}
+
+fun slidingWindowInBlock(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    size: Int,
+    segmentJunctions: Boolean
+): MutableList<Segment> {
+    var windowSize = size
+    if(windowSize < minSegmentTickCount){
+        println("ADJUSTING WINDOW SIZE: Window size is smaller than minSegmentTickCount. Adjusting window size to $minSegmentTickCount.")
+        windowSize = minSegmentTickCount
+    }
+
+    val segments = mutableListOf<Segment>()
+
+    val blocks = segmentByBlock(simulationRuns, minSegmentTickCount)
+    blocks.forEach { originalSegment ->
+        if (originalSegment.tickData.any { it.egoVehicle.lane.road.isJunction } && !segmentJunctions) {
+            segments += originalSegment
+        } else {
+            val endOfBlock = originalSegment.tickData.size
+
+            originalSegment.tickData.forEachIndexed { index, _ ->
+                if(index+windowSize >= endOfBlock){
+                    if(index == 0) segments += originalSegment
+                    return@forEachIndexed
+                }
+
+                val segmentTickData = originalSegment.tickData.subList(index, index + windowSize)
+                if (segmentTickData.size >= minSegmentTickCount) {
+                    segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = originalSegment.simulationRunId, segmentSource = originalSegment.simulationRunId)
                 }
             }
         }
