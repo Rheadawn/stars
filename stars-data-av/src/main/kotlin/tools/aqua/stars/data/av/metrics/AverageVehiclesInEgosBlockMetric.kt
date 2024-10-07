@@ -33,6 +33,8 @@ class AverageVehiclesInEgosBlockMetric(
     SegmentMetricProvider<Actor, TickData, Segment, TickDataUnitSeconds, TickDataDifferenceSeconds>,
     Loggable {
 
+        private val tickDataCache : MutableMap<Int,Int> = mutableMapOf()
+
   /**
    * Evaluates the average count of [Actor]s in the [Block] of the ego vehicle.
    *
@@ -43,7 +45,16 @@ class AverageVehiclesInEgosBlockMetric(
       segment: SegmentType<Actor, TickData, Segment, TickDataUnitSeconds, TickDataDifferenceSeconds>
   ): Double {
     val averageVehiclesInEgosBlock =
-        segment.tickData.map { it.vehiclesInBlock(it.egoVehicle.lane.road.block).size }.average()
+        segment.tickData.map {
+            val hash = it.hashCode()
+            if(tickDataCache.containsKey(hash)) {
+                tickDataCache[hash]!!
+            } else {
+                val count = it.vehiclesInBlock(it.egoVehicle.lane.road.block).size
+                tickDataCache[hash] = count
+                count
+            }
+        }.average()
     logFiner(
         "The average count of vehicles in Segment '$segment' for ego's block is: $averageVehiclesInEgosBlock")
     return averageVehiclesInEgosBlock

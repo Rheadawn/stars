@@ -71,4 +71,14 @@ data class TickData(
   }
 
   override fun toString(): String = "$currentTick"
+
+  override fun hashCode(): Int {
+    var result = currentTick.hashCode()
+    result = 31 * result + egoVehicle.id
+    result = 31 * result + trafficLights.hashCode()
+    result = 31 * result + blocks.hashCode()
+    result = 31 * result + weather.hashCode()
+    result = 31 * result + daytime.hashCode()
+    return result
+  }
 }
