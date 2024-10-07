@@ -31,6 +31,7 @@ class Segmentation() {
         fun BY_DYNAMIC_LANE_CHANGES(segmentJunctions: Boolean): Segmentation = Segmentation(Type.BY_DYNAMIC_LANE_CHANGES, segmentJunctions = segmentJunctions)
         fun BY_DYNAMIC_VARIABLES(segmentJunctions: Boolean): Segmentation = Segmentation(Type.BY_DYNAMIC_VARIABLES, segmentJunctions = segmentJunctions)
         fun SLIDING_WINDOW(size: Int, stepSize: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW, size,stepSize, segmentJunctions)
+        fun SLIDING_WINDOW_METERS(size: Int, stepSize: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_METERS, size,stepSize, segmentJunctions)
         fun SLIDING_WINDOW_BY_BLOCK(size: Int, stepSize: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_BY_BLOCK, size, stepSize, segmentJunctions)
         val SLIDING_WINDOW_HALVING = Segmentation(Type.SLIDING_WINDOW_HALVING)
         fun SLIDING_WINDOW_HALF_OVERLAP(size: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_HALF_OVERLAP, size, segmentJunctions = segmentJunctions)
@@ -50,6 +51,7 @@ class Segmentation() {
                 "BY_DYNAMIC_LANE_CHANGES" -> BY_DYNAMIC_LANE_CHANGES(segmentJunctions)
                 "BY_DYNAMIC_VARIABLES" -> BY_DYNAMIC_VARIABLES(segmentJunctions)
                 "SLIDING_WINDOW" -> SLIDING_WINDOW(segmentationValue?: 100, secondarySegmentationValue?: 1, segmentJunctions)
+                "SLIDING_WINDOW_METERS" -> SLIDING_WINDOW_METERS(segmentationValue?: 100, secondarySegmentationValue?: 10, segmentJunctions)
                 "SLIDING_WINDOW_BY_BLOCK" -> SLIDING_WINDOW_BY_BLOCK(segmentationValue?: 100, secondarySegmentationValue?: 1, segmentJunctions)
                 "SLIDING_WINDOW_HALVING" -> SLIDING_WINDOW_HALVING
                 "SLIDING_WINDOW_HALF_OVERLAP" -> SLIDING_WINDOW_HALF_OVERLAP(segmentationValue?: 100, segmentJunctions)
@@ -74,6 +76,7 @@ class Segmentation() {
         BY_DYNAMIC_PEDESTRIAN_PROXIMITY,
         BY_DYNAMIC_LANE_CHANGES,
         SLIDING_WINDOW_HALVING,
-        SLIDING_WINDOW_HALF_OVERLAP
+        SLIDING_WINDOW_HALF_OVERLAP,
+        SLIDING_WINDOW_METERS
     }
 }

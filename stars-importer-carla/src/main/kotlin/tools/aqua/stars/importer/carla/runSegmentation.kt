@@ -263,6 +263,7 @@ fun sliceRunIntoSegments(
         Segmentation.Type.BY_DYNAMIC_LANE_CHANGES -> segmentByDynamicLaneChanges(simulationRuns, minSegmentTickCount, segmentationBy.segmentJunctions)
         Segmentation.Type.BY_DYNAMIC_VARIABLES -> segmentByDynamicVariables(simulationRuns, minSegmentTickCount, segmentationBy.segmentJunctions)
         Segmentation.Type.SLIDING_WINDOW -> slidingWindow(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.segmentJunctions)
+        Segmentation.Type.SLIDING_WINDOW_METERS -> slidingWindowInMeters(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.segmentJunctions)
         Segmentation.Type.SLIDING_WINDOW_BY_BLOCK -> slidingWindowInBlock(simulationRuns, minSegmentTickCount, segmentationBy.value,segmentationBy.secondaryValue, segmentationBy.segmentJunctions)
         Segmentation.Type.SLIDING_WINDOW_HALVING -> slidingWindowHalving(simulationRuns, minSegmentTickCount)
         Segmentation.Type.SLIDING_WINDOW_HALF_OVERLAP -> slidingWindowHalfOverlap(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
@@ -748,6 +749,86 @@ fun performSlidingWindowOnSimulationRun(
     }
 
     return segments
+}
+
+fun slidingWindowInMeters(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    size: Int,
+    stepSize: Int,
+    segmentJunctions: Boolean
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    if(!segmentJunctions){
+        val junctions = segmentByBlock(simulationRuns, minSegmentTickCount).filter { it.tickData.first().egoVehicle.lane.road.isJunction }
+        segments += junctions
+    }
+
+    simulationRuns.forEach { (simulationRunId, simulationRun) ->
+        segments.addAll(performSlidingWindowOnSimulationRun(simulationRun, simulationRunId, minSegmentTickCount, size, stepSize))
+    }
+
+    return segments
+}
+
+fun performSlidingWindowOnSimulationRunInMeters(
+    simulationRun: List<TickData>,
+    simulationRunId: String,
+    minSegmentTickCount: Int,
+    windowSize: Int,
+    stepSizeInMeters: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    val endOfRun = simulationRun.size
+    var i = 0
+
+    while(i < endOfRun){
+        val endOfWindow = getIndexOfTickInXMeters(simulationRun, i, windowSize)
+        val segmentTickData = simulationRun.subList(i, min(endOfWindow+1, endOfRun))
+
+        if (segmentTickData.size >= minSegmentTickCount) {
+            segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId)
+        } else {
+            println("Segment too short: Id(${simulationRunId}) - Size(${segmentTickData.size})")
+        }
+
+        val stepSize = getIndexOfTickInXMeters(simulationRun, i, stepSizeInMeters) - i
+        i+= stepSize
+    }
+
+    return segments
+}
+
+fun getIndexOfTickInXMeters(
+    tickData: List<TickData>,
+    start: Int,
+    meters: Int
+): Int {
+    var previousPositionOnLane = tickData[start].egoVehicle.positionOnLane
+    var previousRoadId = tickData[start].egoVehicle.lane.road.id
+    var distanceTraveled = 0.0
+    var i = start+1
+
+    while(i < tickData.size){
+        val currentPositionOnLane = tickData[i].egoVehicle.positionOnLane
+        val currentRoadId = tickData[i].egoVehicle.lane.road.id
+
+        distanceTraveled += if(currentRoadId == previousRoadId){
+            abs(currentPositionOnLane - previousPositionOnLane)
+        }else{
+            tickData[i].egoVehicle.location.distanceTo(tickData[i-1].egoVehicle.location)
+        }
+
+        if (distanceTraveled >= meters) {
+            return i
+        }
+
+        previousPositionOnLane = currentPositionOnLane
+        previousRoadId = currentRoadId
+        i++
+    }
+
+    return tickData.size
 }
 
 fun slidingWindowInBlock(
