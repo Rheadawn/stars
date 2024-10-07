@@ -103,6 +103,7 @@ class TSCEvaluation<
             "The calculation of the projections for the given tsc took: $tscProjectionCalculationTime")
 
         val segmentsEvaluationTime = measureTime {
+          val globalCache = PredicateCache<E, T, S, U, D>()
           segments
               .forEachIndexed { index, segment ->
                 print("\rCurrently evaluating segment $index")
@@ -122,7 +123,7 @@ class TSCEvaluation<
                             .filterIsInstance<ProjectionMetricProvider<E, T, S, U, D>>()
                             .forEach { it.evaluate(projection) }
                         // Holds the PredicateContext for the current segment
-                        val context = PredicateContext(segment)
+                        val context = PredicateContext(segment, globalCache)
 
 
                         // Holds the [TSCInstanceNode] of the current [projection] using the
