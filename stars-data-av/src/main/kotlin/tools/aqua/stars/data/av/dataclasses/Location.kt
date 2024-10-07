@@ -17,6 +17,10 @@
 
 package tools.aqua.stars.data.av.dataclasses
 
+import kotlin.math.pow
+import kotlin.math.sqrt
+import kotlin.math.abs
+
 /**
  * Data class for 3D locations.
  *
@@ -24,4 +28,8 @@ package tools.aqua.stars.data.av.dataclasses
  * @property y The y ordinate.
  * @property z The z ordinate.
  */
-data class Location(val x: Double, val y: Double, val z: Double)
+data class Location(val x: Double, val y: Double, val z: Double){
+    fun distanceTo(other: Location): Double {
+        return abs(sqrt((x - other.x).pow(2) + (y - other.y).pow(2) + (z - other.z).pow(2)))
+    }
+}

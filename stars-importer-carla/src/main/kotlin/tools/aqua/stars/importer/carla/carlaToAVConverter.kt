@@ -125,7 +125,7 @@ fun convertJsonPedestrianToPedestrian(
     lane: Lane
 ): Pedestrian =
     Pedestrian(
-        id = pedestrian.id, tickData = tickData, positionOnLane = positionOnLane, lane = lane)
+        id = pedestrian.id, tickData = tickData, positionOnLane = positionOnLane, lane = lane, location = pedestrian.location.toLocation())
 
 /**
  * Converts [JsonBlock] to [Block].

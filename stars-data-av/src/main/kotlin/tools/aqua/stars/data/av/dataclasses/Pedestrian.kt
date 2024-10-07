@@ -30,10 +30,11 @@ data class Pedestrian(
     override val tickData: TickData,
     val positionOnLane: Double,
     val lane: Lane,
+    val location: Location
 ) : Actor() {
 
   override fun clone(newTickData: TickData): Actor =
-      Pedestrian(id, newTickData, positionOnLane, lane)
+      Pedestrian(id, newTickData, positionOnLane, lane, location)
 
   override fun toString(): String =
       "Pedestrian(id=$id, tickData=${tickData}, positionOnLane=$positionOnLane, lane=${lane.laneId}, road=${lane.road.id})"
