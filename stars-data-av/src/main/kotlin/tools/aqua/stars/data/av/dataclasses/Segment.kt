@@ -30,6 +30,7 @@ data class Segment(
     val mainInitList: List<TickData>,
     val simulationRunId: String = "",
     override val segmentSource: String,
+    val segmentationType: Segmentation.Type = Segmentation.Type.NONE
 ) : SegmentType<Actor, TickData, Segment, TickDataUnitSeconds, TickDataDifferenceSeconds> {
 
   override val tickData: List<TickData> = mainInitList.onEach { it.segment = this }
@@ -91,7 +92,7 @@ data class Segment(
    */
   fun toString(egoId: Int): String =
       "Segment[(${tickData.first().currentTick}..${tickData.last().currentTick})] from $simulationRunId " +
-          "with ego $egoId"
+          "with ego $egoId ($segmentationType)"
 
   override fun toString(): String = toString(this.primaryEntityId)
 

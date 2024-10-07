@@ -178,7 +178,7 @@ fun loadSegments(
       // Holds the current [InputStream] of the next dynamic data file to be calculated
       val currentDynamicDataPath = simulationRunsWrapper.dynamicDataFilesArrayDeque.removeFirst()
 
-      println("Reading simulation run file: ${currentDynamicDataPath.toUri()}")
+      println("\nReading simulation run file: ${currentDynamicDataPath.toUri().toString().split("/").last()}")
 
       // Holds the current simulationRun object
       val simulationRun = getJsonContentOfPath<List<JsonTickData>>(currentDynamicDataPath)

@@ -105,7 +105,7 @@ class TSCEvaluation<
         val segmentsEvaluationTime = measureTime {
           segments
               .forEachIndexed { index, segment ->
-                println("\rCurrently evaluating segment $index")
+                print("\rCurrently evaluating segment $index")
                 val segmentEvaluationTime = measureTime {
                   // Run the "evaluate" function for all SegmentMetricProviders on the current
                   // segment
@@ -123,6 +123,7 @@ class TSCEvaluation<
                             .forEach { it.evaluate(projection) }
                         // Holds the PredicateContext for the current segment
                         val context = PredicateContext(segment)
+
 
                         // Holds the [TSCInstanceNode] of the current [projection] using the
                         // [PredicateContext], representing a whole TSC.
