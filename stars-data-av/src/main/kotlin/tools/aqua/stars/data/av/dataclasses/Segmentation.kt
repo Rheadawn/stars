@@ -35,6 +35,8 @@ class Segmentation() {
         fun SLIDING_WINDOW_BY_BLOCK(size: Int, stepSize: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_BY_BLOCK, size, stepSize, segmentJunctions)
         val SLIDING_WINDOW_HALVING = Segmentation(Type.SLIDING_WINDOW_HALVING)
         fun SLIDING_WINDOW_HALF_OVERLAP(size: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_HALF_OVERLAP, size, segmentJunctions = segmentJunctions)
+        fun SLIDING_WINDOW_ROTATING(stepSize: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_ROTATING, secondaryValue = stepSize, segmentJunctions = segmentJunctions)
+        fun SLIDING_WINDOW_BY_TRAFFIC_DENSITY(stepSize: Int, segmentJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_BY_TRAFFIC_DENSITY, secondaryValue = stepSize, segmentJunctions = segmentJunctions)
 
         fun fromConsole(segmentationType: String, segmentationValue: Int?, secondarySegmentationValue: Int?,segmentJunctions: Boolean): Segmentation {
             return when (segmentationType) {
@@ -55,6 +57,8 @@ class Segmentation() {
                 "SLIDING_WINDOW_BY_BLOCK" -> SLIDING_WINDOW_BY_BLOCK(segmentationValue?: 100, secondarySegmentationValue?: 1, segmentJunctions)
                 "SLIDING_WINDOW_HALVING" -> SLIDING_WINDOW_HALVING
                 "SLIDING_WINDOW_HALF_OVERLAP" -> SLIDING_WINDOW_HALF_OVERLAP(segmentationValue?: 100, segmentJunctions)
+                "SLIDING_WINDOW_ROTATING" -> SLIDING_WINDOW_ROTATING(secondarySegmentationValue?: 5, segmentJunctions )
+                "SLIDING_WINDOW_BY_TRAFFIC_DENSITY" -> SLIDING_WINDOW_BY_TRAFFIC_DENSITY(secondarySegmentationValue?: 5, segmentJunctions)
                 else -> BY_BLOCK
             }
         }
@@ -77,6 +81,8 @@ class Segmentation() {
         BY_DYNAMIC_LANE_CHANGES,
         SLIDING_WINDOW_HALVING,
         SLIDING_WINDOW_HALF_OVERLAP,
-        SLIDING_WINDOW_METERS
+        SLIDING_WINDOW_METERS,
+        SLIDING_WINDOW_ROTATING,
+        SLIDING_WINDOW_BY_TRAFFIC_DENSITY
     }
 }

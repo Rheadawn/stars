@@ -267,6 +267,8 @@ fun sliceRunIntoSegments(
         Segmentation.Type.SLIDING_WINDOW_BY_BLOCK -> slidingWindowInBlock(simulationRuns, minSegmentTickCount, segmentationBy.value,segmentationBy.secondaryValue, segmentationBy.segmentJunctions)
         Segmentation.Type.SLIDING_WINDOW_HALVING -> slidingWindowHalving(simulationRuns, minSegmentTickCount)
         Segmentation.Type.SLIDING_WINDOW_HALF_OVERLAP -> slidingWindowHalfOverlap(simulationRuns, minSegmentTickCount, segmentationBy.value, segmentationBy.segmentJunctions)
+        Segmentation.Type.SLIDING_WINDOW_ROTATING -> slidingWindowRotatingWindowSize(simulationRuns, minSegmentTickCount, segmentationBy.secondaryValue, segmentationBy.segmentJunctions)
+        Segmentation.Type.SLIDING_WINDOW_BY_TRAFFIC_DENSITY -> slidingWindowByTrafficDensity(simulationRuns, minSegmentTickCount, segmentationBy.secondaryValue, segmentationBy.segmentJunctions)
     }
 }
 
@@ -765,7 +767,7 @@ fun slidingWindowInMeters(
     }
 
     simulationRuns.forEach { (simulationRunId, simulationRun) ->
-        segments.addAll(performSlidingWindowOnSimulationRun(simulationRun, simulationRunId, minSegmentTickCount, size, stepSize))
+        segments.addAll(performSlidingWindowOnSimulationRunInMeters(simulationRun, simulationRunId, minSegmentTickCount, size, stepSize))
     }
 
     return segments
@@ -915,6 +917,91 @@ fun slidingWindowHalfOverlap(
 
     return segments
 }
+
+fun slidingWindowRotatingWindowSize(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    stepSize: Int,
+    segmentJunctions: Boolean
+): MutableList<Segment>{
+    val segments = mutableListOf<Segment>()
+    val windowSizes = mutableListOf(60,65,70,75,80)
+
+    if(!segmentJunctions){
+        val junctions = segmentByBlock(simulationRuns, minSegmentTickCount).filter { it.tickData.first().egoVehicle.lane.road.isJunction }
+        segments += junctions
+    }
+
+    simulationRuns.forEach { (simulationRunId, simulationRun) ->
+        segments.addAll(performSlidingRotatingWindowOnSimulationRun(simulationRun, simulationRunId, minSegmentTickCount, windowSizes, stepSize))
+    }
+
+    return segments
+}
+
+fun performSlidingRotatingWindowOnSimulationRun(
+    simulationRun: List<TickData>,
+    simulationRunId: String,
+    minSegmentTickCount: Int,
+    windowSizes: List<Int> = listOf(60,65,70,75,80),
+    stepSize: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    val endOfRun = simulationRun.size
+
+    for(i in 0 until endOfRun step stepSize){
+        val windowSize = windowSizes.random()
+        if(i+windowSize >= endOfRun){
+            break
+        }
+
+        val segmentTickData = simulationRun.subList(i, i + windowSize)
+        if (segmentTickData.size >= minSegmentTickCount) {
+            segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId)
+        }
+    }
+
+    return segments
+}
+
+fun slidingWindowByTrafficDensity(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    minSegmentTickCount: Int,
+    stepSize: Int,
+    segmentJunctions: Boolean
+): MutableList<Segment>{
+    val segments = mutableListOf<Segment>()
+    val trafficDensityRanges = listOf(6,16,Int.MAX_VALUE)
+    val windowSizes = listOf(60, 70, 80)
+
+    if(!segmentJunctions){
+        val junctions = segmentByBlock(simulationRuns, minSegmentTickCount).filter { it.tickData.first().egoVehicle.lane.road.isJunction }
+        segments += junctions
+    }
+
+    simulationRuns.forEach { (simulationRunId, simulationRun) ->
+        val endOfRun = simulationRun.size
+
+        for(i in 0 until endOfRun step stepSize){
+            val currentTrafficDensityRangeIndex = trafficDensityRanges.indexOfFirst { it > simulationRun[i].vehiclesInBlock(simulationRun[i].egoVehicle.lane.road.block).size }
+            val windowSize = windowSizes[currentTrafficDensityRangeIndex]
+
+            if(i+windowSize >= endOfRun){
+                break
+            }
+
+            val segmentTickData = simulationRun.subList(i, i + windowSize)
+            if (segmentTickData.size >= minSegmentTickCount) {
+                segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId)
+            }
+        }
+
+    }
+
+    return segments
+}
+
+
 
 /**
  * Cleans Json data.

@@ -30,7 +30,7 @@ data class Pedestrian(
     override val tickData: TickData,
     val positionOnLane: Double,
     val lane: Lane,
-    val location: Location
+    val location: Location = Location(0.0,0.0,0.0)
 ) : Actor() {
 
   override fun clone(newTickData: TickData): Actor =
