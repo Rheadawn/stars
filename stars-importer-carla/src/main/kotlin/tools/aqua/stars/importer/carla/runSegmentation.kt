@@ -244,6 +244,7 @@ fun sliceRunIntoSegments(
     useEveryVehicleAsEgo: Boolean,
     simulationRunId: String,
     minSegmentTickCount: Int,
+    maxSegmentTickCount: Int,
     segmentationBy: Segmentation
 ): List<Segment> {
     cleanJsonData(blocks, jsonSimulationRun)
@@ -252,6 +253,7 @@ fun sliceRunIntoSegments(
     return when (segmentationBy.type) {
         Segmentation.Type.STATIC_SEGMENT_LENGTH_TICKS -> staticSegmentLengthInTicks(simulationRuns, segmentationBy.addJunctions, segmentationBy.value, segmentationBy.secondaryValue)
         Segmentation.Type.STATIC_SEGMENT_LENGTH_METERS -> staticSegmentLengthInMeters(simulationRuns, segmentationBy.addJunctions, segmentationBy.value, segmentationBy.secondaryValue)
+        Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED -> dynamicSegmentLengthForSpeedInMeters(simulationRuns, segmentationBy.addJunctions, segmentationBy.value, maxSegmentTickCount)
         //==============================================================================================================
         Segmentation.Type.BY_BLOCK -> segmentByBlock(simulationRuns, minSegmentTickCount)
         Segmentation.Type.NONE -> noSegmentation(simulationRuns, minSegmentTickCount)
@@ -275,6 +277,7 @@ fun sliceRunIntoSegments(
     }
 }
 
+//addJunction is used
 fun staticSegmentLengthInTicks(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     addJunctions: Boolean,
@@ -320,6 +323,7 @@ fun slideTickWindowOverRun(
     return segments
 }
 
+//addJunctions is used
 fun staticSegmentLengthInMeters(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     addJunctions: Boolean,
@@ -364,12 +368,12 @@ fun slideMeterWindowOverRun(
     var i = 0
 
     while(i <= lastValidTick){
-        val endOfWindow = getIndexOfTickInXMeters(simulationRun, i, windowSize)
+        val endOfWindow = getIndexOfTickInXMeters(simulationRun, i, windowSize).first
         val segmentTickData = simulationRun.subList(i, endOfWindow+1)
 
         segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId)
 
-        val stepSize = getIndexOfTickInXMeters(simulationRun, i, stepSizeInMeters) - i
+        val stepSize = getIndexOfTickInXMeters(simulationRun, i, stepSizeInMeters).first - i
         i+= stepSize
     }
 
@@ -393,7 +397,7 @@ fun getIndexOfTickInXMeters(
     tickData: List<TickData>,
     start: Int,
     meters: Int
-): Int {
+): Pair<Int,Double> {
     var previousPositionOnLane = tickData[start].egoVehicle.positionOnLane
     var previousRoadId = tickData[start].egoVehicle.lane.road.id
     var distanceTraveled = 0.0
@@ -410,7 +414,7 @@ fun getIndexOfTickInXMeters(
         }
 
         if (distanceTraveled >= meters) {
-            return i
+            return i to distanceTraveled
         }
 
         previousPositionOnLane = currentPositionOnLane
@@ -418,7 +422,48 @@ fun getIndexOfTickInXMeters(
         i++
     }
 
-    return tickData.size
+    return tickData.size to distanceTraveled
+}
+
+// uses maxSegmentTickCount
+// includes segments that are shorter than they should be, because they overlap with the end of the run
+// lastValidTick ensures that not too many of these short segments exist, because a tick can only be start
+// of a segment if it is at least [lookAhead] meters away from the end of the run
+fun dynamicSegmentLengthForSpeedInMeters(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    addJunctions: Boolean,
+    stepSize: Int,
+    maxSegmentTickCount: Int
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+    val scalar = 30
+    val lookAhead = 30
+
+    if(addJunctions){
+        val junctions = segmentByBlock(simulationRuns, 0).filter { it.tickData.first().egoVehicle.lane.road.isJunction }
+        segments += junctions
+    }
+
+    simulationRuns.forEach { (simulationRunId, simulationRun) ->
+        val lastValidTick = getLastValidTickInRunForMeters(simulationRun, lookAhead)
+        var i  = 0
+        while (i <= lastValidTick) {
+            val currentSpeed = simulationRun[i].egoVehicle.effVelocityInKmPH
+            val windowSize = lookAhead * (1+(currentSpeed/scalar))
+            val lastTickInWindow = getIndexOfTickInXMeters(simulationRun, i, windowSize.toInt()).first
+
+            var segmentTickData = simulationRun.subList(i, lastTickInWindow+1)
+            if (segmentTickData.size > maxSegmentTickCount) {
+                segmentTickData = segmentTickData.subList(0, maxSegmentTickCount)
+            }
+            segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, Segmentation.Type.BY_DYNAMIC_SPEED)
+
+            val step = getIndexOfTickInXMeters(simulationRun, i, stepSize).first - i
+            i += step
+        }
+    }
+
+    return segments
 }
 
 //======================================================================================================================
@@ -932,7 +977,7 @@ fun performSlidingWindowOnSimulationRunInMeters(
     var i = 0
 
     while(i < endOfRun){
-        val endOfWindow = getIndexOfTickInXMeters(simulationRun, i, windowSize)
+        val endOfWindow = getIndexOfTickInXMeters(simulationRun, i, windowSize).first
         val segmentTickData = simulationRun.subList(i, min(endOfWindow+1, endOfRun))
 
         if (segmentTickData.size >= minSegmentTickCount) {
@@ -941,7 +986,7 @@ fun performSlidingWindowOnSimulationRunInMeters(
             println("Segment too short: Id(${simulationRunId}) - Size(${segmentTickData.size})")
         }
 
-        val stepSize = getIndexOfTickInXMeters(simulationRun, i, stepSizeInMeters) - i
+        val stepSize = getIndexOfTickInXMeters(simulationRun, i, stepSizeInMeters).first - i
         i+= stepSize
     }
 

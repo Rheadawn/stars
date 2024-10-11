@@ -118,6 +118,7 @@ fun loadSegments(
     simulationRunsWrappers: List<CarlaSimulationRunsWrapper>,
     useEveryVehicleAsEgo: Boolean = false,
     minSegmentTickCount: Int = 10,
+    maxSegmentTickCount: Int = Int.MAX_VALUE,
     orderFilesBySeed: Boolean = false,
     segmentationBy: Segmentation = Segmentation.BY_BLOCK
 ): Sequence<Segment> {
@@ -191,6 +192,7 @@ fun loadSegments(
               useEveryVehicleAsEgo,
               currentDynamicDataPath.fileName.toString(),
               minSegmentTickCount,
+              maxSegmentTickCount,
               segmentationBy
           ))
       return@generateSequence segmentBuffer.removeFirst()
@@ -222,6 +224,7 @@ fun loadSegments(
     dynamicDataFile: Path,
     useEveryVehicleAsEgo: Boolean = false,
     minSegmentTickCount: Int = 10,
+    maxSegmentTickCount: Int = Int.MAX_VALUE,
     orderFilesBySeed: Boolean = false
 ): Sequence<Segment> =
     // Call actual implementation of loadSegments with correct data structure
@@ -229,6 +232,7 @@ fun loadSegments(
         listOf(CarlaSimulationRunsWrapper(mapDataFile, listOf(dynamicDataFile))),
         useEveryVehicleAsEgo,
         minSegmentTickCount,
+        maxSegmentTickCount,
         orderFilesBySeed)
 
 /**
@@ -250,6 +254,7 @@ fun loadSegments(
     dynamicDataFiles: List<Path>,
     useEveryVehicleAsEgo: Boolean = false,
     minSegmentTickCount: Int = 10,
+    maxSegmentTickCount: Int = Int.MAX_VALUE,
     orderFilesBySeed: Boolean = false
 ): Sequence<Segment> =
     // Call actual implementation of loadSegments with correct data structure
@@ -257,6 +262,7 @@ fun loadSegments(
         listOf(CarlaSimulationRunsWrapper(mapDataFile, dynamicDataFiles)),
         useEveryVehicleAsEgo,
         minSegmentTickCount,
+        maxSegmentTickCount,
         orderFilesBySeed)
 
 /**
@@ -278,6 +284,7 @@ fun loadSegments(
     mapToDynamicDataFiles: Map<Path, List<Path>>,
     useEveryVehicleAsEgo: Boolean = false,
     minSegmentTickCount: Int = 10,
+    maxSegmentTickCount: Int = Int.MAX_VALUE,
     orderFilesBySeed: Boolean = false
 ): Sequence<Segment> =
     // Call actual implementation of loadSegments with correct data structure
@@ -285,4 +292,5 @@ fun loadSegments(
         mapToDynamicDataFiles.map { CarlaSimulationRunsWrapper(it.key, it.value) },
         useEveryVehicleAsEgo,
         minSegmentTickCount,
+        maxSegmentTickCount,
         orderFilesBySeed)

@@ -22,6 +22,7 @@ class Segmentation() {
     companion object {
         fun STATIC_SEGMENT_LENGTH_TICKS(windowSize: Int, overlapPercentage: Double, addJunctions: Boolean): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_TICKS, value = windowSize, secondaryValue = max(((1-overlapPercentage)*windowSize).toInt(),1), addJunctions = addJunctions)
         fun STATIC_SEGMENT_LENGTH_METERS(windowSize: Int, overlapPercentage: Double, addJunctions: Boolean): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_METERS, value = windowSize, secondaryValue = max(((1-overlapPercentage)*windowSize).toInt(),1), addJunctions = addJunctions)
+        fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(stepSize: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED, value = stepSize, addJunctions = addJunctions)
         //==============================================================================================================
         val BY_BLOCK = Segmentation(Type.BY_BLOCK)
         val NONE = Segmentation(Type.NONE)
@@ -47,6 +48,7 @@ class Segmentation() {
             return when (segmentationType) {
                 "STATIC_SEGMENT_LENGTH_TICKS" -> STATIC_SEGMENT_LENGTH_TICKS(segmentationValue?: 120, overlapPercentage?:0.25, addJunctions)
                 "STATIC_SEGMENT_LENGTH_METERS" -> STATIC_SEGMENT_LENGTH_METERS(segmentationValue?: 70, overlapPercentage?:0.25, addJunctions)
+                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(segmentationValue?: 5, addJunctions)
                 //======================================================================================================
                 "NONE" -> NONE
                 "BY_BLOCK" -> BY_BLOCK
@@ -75,6 +77,7 @@ class Segmentation() {
     enum class Type {
         STATIC_SEGMENT_LENGTH_TICKS,
         STATIC_SEGMENT_LENGTH_METERS,
+        DYNAMIC_SEGMENT_LENGTH_METERS_SPEED,
         //==============================================================================================================
         NONE,
         BY_BLOCK,
