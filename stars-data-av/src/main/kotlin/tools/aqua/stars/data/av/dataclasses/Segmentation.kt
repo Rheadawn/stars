@@ -20,9 +20,14 @@ class Segmentation() {
     }
 
     companion object {
-        fun STATIC_SEGMENT_LENGTH_TICKS(windowSize: Int, overlapPercentage: Double, addJunctions: Boolean): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_TICKS, value = windowSize, secondaryValue = max(((1-overlapPercentage)*windowSize).toInt(),1), addJunctions = addJunctions)
-        fun STATIC_SEGMENT_LENGTH_METERS(windowSize: Int, overlapPercentage: Double, addJunctions: Boolean): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_METERS, value = windowSize, secondaryValue = max(((1-overlapPercentage)*windowSize).toInt(),1), addJunctions = addJunctions)
+        fun STATIC_SEGMENT_LENGTH_TICKS(windowSize: Int, overlap: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_TICKS, value = windowSize, secondaryValue = max(((1-(overlap/100))*windowSize),1), addJunctions = addJunctions)
+        fun STATIC_SEGMENT_LENGTH_METERS(windowSize: Int, overlap: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_METERS, value = windowSize, secondaryValue = max(((1-(overlap/100))*windowSize),1), addJunctions = addJunctions)
         fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(stepSize: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED, value = stepSize, addJunctions = addJunctions)
+        fun DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION(stepSize: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION, value = stepSize, addJunctions = addJunctions)
+        fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(stepSize: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1, value = stepSize, addJunctions = addJunctions)
+        fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2(stepSize: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2, value = stepSize, addJunctions = addJunctions)
+        fun SLIDING_WINDOW_MULTISTART_METERS(overlap: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_METERS, value = overlap, addJunctions = addJunctions)
+        fun SLIDING_WINDOW_MULTISTART_TICKS(overlap: Int, addJunctions: Boolean): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_TICKS, value = overlap, addJunctions = addJunctions)
         //==============================================================================================================
         val BY_BLOCK = Segmentation(Type.BY_BLOCK)
         val NONE = Segmentation(Type.NONE)
@@ -46,9 +51,14 @@ class Segmentation() {
 
         fun fromConsole(segmentationType: String, segmentationValue: Int?, secondarySegmentationValue: Int?, overlapPercentage: Double?, addJunctions: Boolean): Segmentation {
             return when (segmentationType) {
-                "STATIC_SEGMENT_LENGTH_TICKS" -> STATIC_SEGMENT_LENGTH_TICKS(segmentationValue?: 120, overlapPercentage?:0.25, addJunctions)
-                "STATIC_SEGMENT_LENGTH_METERS" -> STATIC_SEGMENT_LENGTH_METERS(segmentationValue?: 70, overlapPercentage?:0.25, addJunctions)
+                "STATIC_SEGMENT_LENGTH_TICKS" -> STATIC_SEGMENT_LENGTH_TICKS(segmentationValue?: 120, secondarySegmentationValue?: 25, addJunctions)
+                "STATIC_SEGMENT_LENGTH_METERS" -> STATIC_SEGMENT_LENGTH_METERS(segmentationValue?: 70, secondarySegmentationValue?: 25, addJunctions)
                 "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(segmentationValue?: 5, addJunctions)
+                "DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION" -> DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION(segmentationValue?: 5, addJunctions)
+                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(segmentationValue?: 5, addJunctions)
+                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2(segmentationValue?: 5, addJunctions)
+                "SLIDING_WINDOW_MULTISTART_METERS" -> SLIDING_WINDOW_MULTISTART_METERS(segmentationValue?: 25, addJunctions)
+                "SLIDING_WINDOW_MULTISTART_TICKS" -> SLIDING_WINDOW_MULTISTART_TICKS(segmentationValue?: 25, addJunctions)
                 //======================================================================================================
                 "NONE" -> NONE
                 "BY_BLOCK" -> BY_BLOCK
@@ -78,6 +88,11 @@ class Segmentation() {
         STATIC_SEGMENT_LENGTH_TICKS,
         STATIC_SEGMENT_LENGTH_METERS,
         DYNAMIC_SEGMENT_LENGTH_METERS_SPEED,
+        DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION,
+        DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1,
+        DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2,
+        SLIDING_WINDOW_MULTISTART_METERS,
+        SLIDING_WINDOW_MULTISTART_TICKS,
         //==============================================================================================================
         NONE,
         BY_BLOCK,
