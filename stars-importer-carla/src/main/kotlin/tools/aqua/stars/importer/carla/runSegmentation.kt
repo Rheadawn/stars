@@ -248,12 +248,12 @@ fun sliceRunIntoSegments(
     val simulationRuns = convertJsonData(blocks, jsonSimulationRun, useEveryVehicleAsEgo, simulationRunId)
 
     return when (segmentationBy.type) {
-        Segmentation.Type.STATIC_SEGMENT_LENGTH_TICKS -> staticSegmentLengthInTicks(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue)
+        Segmentation.Type.STATIC_SEGMENT_LENGTH_SECONDS -> staticSegmentLengthInSeconds(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue)
         Segmentation.Type.STATIC_SEGMENT_LENGTH_METERS -> staticSegmentLengthInMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED -> dynamicSegmentLengthForSpeedInMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue, maxSegmentTickCount)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1 -> dynamicSegmentLengthForSpeedAndAccelerationInMeters1(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, maxSegmentTickCount)
         Segmentation.Type.SLIDING_WINDOW_MULTISTART_METERS -> slidingWindowMultiStartMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue)
-        Segmentation.Type.SLIDING_WINDOW_MULTISTART_TICKS -> slidingWindowMultiStartTicks(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue)
+        Segmentation.Type.SLIDING_WINDOW_MULTISTART_SECONDS -> slidingWindowMultiStartSeconds(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue)
         //==============================================================================================================
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION -> dynamicSegmentLengthForAccelerationInMeters(simulationRuns, segmentationBy.value, maxSegmentTickCount)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2 -> dynamicSegmentLengthForSpeedAndAccelerationInMeters2(simulationRuns, segmentationBy.value, maxSegmentTickCount)
@@ -322,54 +322,92 @@ fun getLengthOfRunInMeters(simulationRun: List<TickData>): Double{
     }
 }
 
-//addJunction is used
-fun staticSegmentLengthInTicks(
+fun getLengthOfRunInSeconds(simulationRun: List<TickData>): Double{
+    return simulationRun.last().currentTick.tickSeconds - simulationRun.first().currentTick.tickSeconds
+}
+
+fun staticSegmentLengthInSeconds(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
-    windowSize: Double,
-    stepSize: Double
+    windowSizeSeconds: Double,
+    stepSizeSeconds: Double
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
 
     simulationRuns.forEach { (simulationRunId, simulationRun) ->
-        if(windowSize <= simulationRun.size){
-            segments.addAll(slideTickWindowOverRun(simulationRun, simulationRunId, windowSize, stepSize))
+        if(windowSizeSeconds <= getLengthOfRunInSeconds(simulationRun)){
+            segments.addAll(slideSecondWindowOverRun(simulationRun, simulationRunId, windowSizeSeconds, stepSizeSeconds))
         }else{
-            segments += Segment(simulationRun.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, segmentationType = Segmentation.Type.STATIC_SEGMENT_LENGTH_TICKS)
+            segments += Segment(simulationRun.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, segmentationType = Segmentation.Type.STATIC_SEGMENT_LENGTH_SECONDS)
         }
     }
 
     return segments
 }
 
-fun slideTickWindowOverRun(
+fun slideSecondWindowOverRun(
     simulationRun: List<TickData>,
     simulationRunId: String,
-    windowSize: Double,
-    stepSize: Double
+    windowSizeSeconds: Double,
+    stepSizeSeconds: Double
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
-    val endOfRun = simulationRun.size
+    val lastValidTick = getLastValidTickInRunForSeconds(simulationRun, windowSizeSeconds)
+    var i = 0
 
-    for(i in 0 until endOfRun step stepSize.toInt()){
+    while(i <= lastValidTick){
+        val endOfWindow = getIndexOfTickInXSeconds(simulationRun, i, windowSizeSeconds).first
+
         val junctionExtensionStart = if(simulationRun[i].egoVehicle.lane.road.isJunction) getJunctionExtensionBeforeStart(i, simulationRun) else mutableListOf()
-        var junctionExtensionEnd = listOf<TickData>()
+        val junctionExtensionEnd = if(simulationRun[endOfWindow].egoVehicle.lane.road.isJunction) getJunctionExtensionAfterEnd(endOfWindow+1, simulationRun) else mutableListOf()
+        val segmentTickData = junctionExtensionStart + simulationRun.subList(i, endOfWindow+1) + junctionExtensionEnd
 
-        if(i+windowSize > endOfRun){
-            val segmentTickData = simulationRun.subList(endOfRun-windowSize.toInt(), endOfRun)
-            segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, segmentationType = Segmentation.Type.STATIC_SEGMENT_LENGTH_TICKS)
-            break
-        }else{
-            if(simulationRun[i+windowSize.toInt()-1].egoVehicle.lane.road.isJunction) junctionExtensionEnd = getJunctionExtensionAfterEnd(i+windowSize.toInt(), simulationRun)
-        }
+        segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, segmentationType = Segmentation.Type.STATIC_SEGMENT_LENGTH_METERS)
 
-        val segmentTickData = junctionExtensionStart + simulationRun.subList(i, i + windowSize.toInt()) + junctionExtensionEnd
-        segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, segmentationType = Segmentation.Type.STATIC_SEGMENT_LENGTH_TICKS)
+        val stepSize = getIndexOfTickInXSeconds(simulationRun, i, stepSizeSeconds).first - i
+        i+= stepSize
     }
+
+    val segmentTickData = simulationRun.subList(lastValidTick, simulationRun.size)
+    segments += Segment(segmentTickData.map { it.clone() }, simulationRunId = simulationRunId, segmentSource = simulationRunId, segmentationType = Segmentation.Type.STATIC_SEGMENT_LENGTH_METERS)
 
     return segments
 }
 
-//addJunctions is used
+fun getLastValidTickInRunForSeconds(simulationRun: List<TickData>, windowSizeSeconds: Double): Int {
+    val secondsOfLastTick = simulationRun.last().currentTick.tickSeconds
+    for(i in simulationRun.size-2 downTo 0){
+        val secondsOfCurrentTick = simulationRun[i].currentTick.tickSeconds
+        val secondsTravelled = secondsOfLastTick - secondsOfCurrentTick
+        if(secondsTravelled >= windowSizeSeconds){
+            return i
+        }
+    }
+    return 0
+}
+
+fun getIndexOfTickInXSeconds(
+    tickData: List<TickData>,
+    start: Int,
+    seconds: Double
+): Pair<Int,Double> {
+    val secondsAtStart = tickData[start].currentTick.tickSeconds
+    var i = start+1
+
+    while(i < tickData.size){
+        val currentSeconds = tickData[i].currentTick.tickSeconds
+        val secondsTravelled = currentSeconds - secondsAtStart
+
+        if (secondsTravelled >= seconds) {
+            return i to secondsTravelled
+        }
+
+        i++
+    }
+
+    val secondsAtEnd = tickData[tickData.size-1].currentTick.tickSeconds
+    return tickData.size-1 to (secondsAtEnd-secondsAtStart)
+}
+
 fun staticSegmentLengthInMeters(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     windowSize: Double,
@@ -677,7 +715,7 @@ fun slidingWindowMultiStartMeters(
     return segments
 }
 
-fun slidingWindowMultiStartTicks(
+fun slidingWindowMultiStartSeconds(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
     windowSize1: Double,
     windowSize2: Double,
@@ -690,7 +728,7 @@ fun slidingWindowMultiStartTicks(
         windowSizes.forEach { size ->
             //standard overlap of 75%
             val stepSize = max((size*0.25),1.0)
-            segments.addAll(slideTickWindowOverRun(simulationRun, simulationRunId, size, stepSize))
+            segments.addAll(slideSecondWindowOverRun(simulationRun, simulationRunId, size, stepSize))
         }
     }
 
