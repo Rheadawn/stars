@@ -14,7 +14,7 @@ class Segmentation() {
     var addJunctions: Boolean = false
         private set
 
-    private constructor(type: Type = Type.BY_BLOCK, value: Double = 0.0, secondaryValue: Double = 0.0, tertiaryValue: Double = 0.0, addJunctions: Boolean = false) : this() {
+    constructor(type: Type = Type.BY_BLOCK, value: Double = 0.0, secondaryValue: Double = 0.0, tertiaryValue: Double = 0.0, addJunctions: Boolean = false) : this() {
         this.type = type
         this.value = value
         this.secondaryValue = secondaryValue

@@ -35,6 +35,7 @@ import kotlinx.serialization.modules.subclass
 import tools.aqua.stars.data.av.dataclasses.Block
 import tools.aqua.stars.data.av.dataclasses.Segment
 import tools.aqua.stars.data.av.dataclasses.Segmentation
+import tools.aqua.stars.data.av.dataclasses.Segmentation.Type
 import tools.aqua.stars.importer.carla.dataclasses.*
 
 /** Carla data serializer module. */
@@ -120,7 +121,7 @@ fun loadSegments(
     minSegmentTickCount: Int = 10,
     maxSegmentTickCount: Int = Int.MAX_VALUE,
     orderFilesBySeed: Boolean = false,
-    segmentationBy: Segmentation = Segmentation.BY_BLOCK
+    segmentationBy: Segmentation = Segmentation(Type.BY_BLOCK)
 ): Sequence<Segment> {
   var simulationRunsWrapperList = simulationRunsWrappers
   // Check that every SimulationRunsWrapper has dynamic data files loaded
