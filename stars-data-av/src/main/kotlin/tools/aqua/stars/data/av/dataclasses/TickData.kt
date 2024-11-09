@@ -52,6 +52,9 @@ data class TickData(
   val egoVehicle: Vehicle?
     get() = vehicles.firstOrNull { it.isEgo }
 
+  val egoVehicleNotNull: Vehicle
+    get() = egoVehicle ?: throw IllegalStateException("Ego vehicle not found.")
+
   /** Returns all [Vehicle]s in given [Block]. */
   fun vehiclesInBlock(block: Block): List<Vehicle> = vehicles.filter { it.lane.road.block == block }
 
@@ -66,7 +69,7 @@ data class TickData(
 
   override fun hashCode(): Int {
     var result = currentTick.hashCode()
-    result = 31 * result + egoVehicle.id
+    result = 31 * result + egoVehicleNotNull.id
     result = 31 * result + trafficLights.hashCode()
     result = 31 * result + blocks.hashCode()
     result = 31 * result + weather.hashCode()
