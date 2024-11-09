@@ -23,7 +23,6 @@ import tools.aqua.stars.core.tsc.builder.CONST_TRUE
 import tools.aqua.stars.core.tsc.edge.TSCEdge
 import tools.aqua.stars.core.tsc.instance.TSCInstanceEdge
 import tools.aqua.stars.core.tsc.instance.TSCInstanceNode
-import tools.aqua.stars.core.tsc.projection.TSCProjection
 import tools.aqua.stars.core.types.*
 
 /**
@@ -34,10 +33,10 @@ import tools.aqua.stars.core.types.*
  * @param S [SegmentType].
  * @param U [TickUnit].
  * @param D [TickDifference].
- * @param monitorsMap Map of monitor labels to their predicates of the [TSCNode].
- * @param projectionsMap Map of projections of the [TSCNode].
  * @property label Label of the [TSCNode].
  * @property edges Outgoing [TSCEdge]s of the [TSCNode].
+ * @param monitorsMap Map of monitor labels to their predicates of the [TSCNode].
+ * @param projectionsMap Map of projections of the [TSCNode].
  * @property valueFunction Value function predicate of the [TSCNode].
  */
 sealed class TSCNode<
@@ -71,6 +70,7 @@ sealed class TSCNode<
   ): TSCInstanceNode<E, T, S, U, D> =
       TSCInstanceNode(
               this,
+              this.label,
               this.monitors.mapValues { (_, monitor) -> monitor(ctx) },
               this.valueFunction(ctx))
           .also {
@@ -78,27 +78,24 @@ sealed class TSCNode<
                 this.edges
                     .filter { t -> t.condition(ctx) }
                     .map { tscEdge ->
-                      TSCInstanceEdge(
-                          tscEdge.destination.label,
-                          tscEdge.destination.evaluate(ctx, depth + 1),
-                          tscEdge)
+                      TSCInstanceEdge(tscEdge.destination.evaluate(ctx, depth + 1), tscEdge)
                     }
           }
 
   /**
-   * Builds the TSCs for each projection defined in this [TSCNode] and returns a [TSCProjection] for
-   * each projection id. All projection ids in [projectionIgnoreList] are ignored and will not be in
-   * the resulting projection list.
+   * Builds the TSCs for each projection defined in this [TSCNode] and returns a [TSC] for each
+   * projection id. All projection ids in [projectionIgnoreList] are ignored and will not be in the
+   * resulting projection list.
    *
    * @param projectionIgnoreList Projections to ignore.
    */
-  fun buildProjections(
-      projectionIgnoreList: List<Any> = emptyList()
-  ): List<TSCProjection<E, T, S, U, D>> =
+  fun buildProjections(projectionIgnoreList: List<Any> = emptyList()): List<TSC<E, T, S, U, D>> =
       projections
           .filter { wrapper -> !projectionIgnoreList.any { wrapper.key == it } }
-          .mapNotNull {
-            buildProjection(it.key)?.let { tsc -> TSCProjection(it.key, TSC(rootNode = tsc)) }
+          .mapNotNull { (projectionId, _) ->
+            buildProjection(projectionId = projectionId)?.let { rootNode ->
+              TSC(rootNode = rootNode, identifier = projectionId)
+            }
           }
 
   /**
@@ -126,7 +123,8 @@ sealed class TSCNode<
             val outgoingEdges =
                 edges
                     .mapNotNull { edge ->
-                      edge.destination.buildProjection(projectionId)?.let { projection ->
+                      edge.destination.buildProjection(projectionId = projectionId)?.let {
+                          projection ->
                         TSCEdge(edge.condition, projection)
                       }
                     }
@@ -182,13 +180,14 @@ sealed class TSCNode<
       StringBuilder()
           .apply {
             when (this@TSCNode) {
-              is TSCBoundedNode -> append("(${bounds.first}..${bounds.second})\n")
+              is TSCLeafNode -> append(label)
+              is TSCBoundedNode -> append("${label}(${bounds.first}..${bounds.second})")
             }
 
             edges.forEach { instanceEdge ->
+              append("\n")
               append("  ".repeat(depth))
               append(if (instanceEdge.condition == CONST_TRUE) "-T-> " else "---> ")
-              append(instanceEdge.destination.label)
               append(instanceEdge.destination.toString(depth + 1))
             }
           }

@@ -1,3 +1,4 @@
+[0.5]: https://github.com/tudo-aqua/stars/releases/tag/v0.5
 [0.4]: https://github.com/tudo-aqua/stars/releases/tag/v0.4
 [0.3]: https://github.com/tudo-aqua/stars/releases/tag/v0.3
 [0.2.2]: https://github.com/tudo-aqua/stars/releases/tag/v0.2.2
@@ -13,6 +14,38 @@
 
 # Changelog
 All notable changes to this project will be documented in this file.
+
+## [0.5] - 06.11.2024
+### Added
+- Add `PreEvaluationHooks` before evaluation of `TSCs` and `Segments` in `TSCEvaluation`.
+- Add pre-defined `MinNodesInTSCHook` and `MinTicksPerSegmentHook`.
+- Add `identifier` field to `TSC`.
+- Add `euclideanDistance` function to `Location`.
+- Add `vehicleType` field to `Vehicle`.
+- Add `loggerIdentifier` field to `Loggable` interface.
+- Add `Serializable` interface.
+  - This adds the functionality to compare your current analysis results with the previous run or a specified baseline. 
+- Add experiment run metadata file containing the experiment run configuration and system information.
+
+### Changed
+- `TSCEvaluation` now accepts multiple `TSCs` instead of `TSCProjections`.
+- `registerMetricProviders` now throws an `IllegalArgumentException` when multiple instances of the same `MetricProvider` class is registered.
+- Root nodes in a `TSC` now **must not** have a condition.
+- Move `label` from `TSCEdge` to `TSCNode`.
+- All default metrics now implement the new `Serializable` interface.
+- Rename `ProjectionMetricProvider` to `TSCMetricProvider`.
+- Rename `ProjectionAndTSCInstanceNodeMetricProvider` to `TSCAndTSCInstanceNodeMetricProvider`.
+- Rename `InvalidTSCInstancesPerProjectionMetric` to `InvalidTSCInstancesPerTSCMetric`.
+- Rename `ValidTSCInstancesPerProjectionMetric` to `ValidTSCInstancesPerTSCMetric`.
+- Rename `MissedTSCInstancesPerProjectionMetric` to `MissedTSCInstancesPerTSCMetric`.
+- Rename `MissingPredicateCombinationsPerProjectionMetric` to `MissingPredicateCombinationsPerTSCMetric`.
+- Rename `DataSaver` to `PlotDataSaver`.
+
+### Fixed
+- Fix `toString()` function of `TSCNode` to include the root node's label.
+
+### Removed
+- Remove `TSCProjection` class. Now, for each projection in a `TSC` a new `TSC` is created and evaluated.
 
 ## [0.4] - 02.08.2024
 ### Added

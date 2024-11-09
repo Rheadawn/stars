@@ -26,9 +26,13 @@ import tools.aqua.stars.data.av.dataclasses.*
 /**
  * This class is an implementation of [SegmentMetricProvider] which provides the metric "average
  * vehicles in ego's block".
+ *
+ * @property loggerIdentifier identifier (name) for the logger.
+ * @property logger [Logger] instance.
  */
 class AverageVehiclesInEgosBlockMetric(
-    override val logger: Logger = Loggable.getLogger("average-vehicles-in-egos-block")
+    override val loggerIdentifier: String = "average-vehicles-in-egos-block",
+    override val logger: Logger = Loggable.getLogger(loggerIdentifier),
 ) :
     SegmentMetricProvider<Actor, TickData, Segment, TickDataUnitSeconds, TickDataDifferenceSeconds>,
     Loggable {
@@ -44,17 +48,19 @@ class AverageVehiclesInEgosBlockMetric(
   override fun evaluate(
       segment: SegmentType<Actor, TickData, Segment, TickDataUnitSeconds, TickDataDifferenceSeconds>
   ): Double {
-    val averageVehiclesInEgosBlock =
-        segment.tickData.map {
-            val hash = it.hashCode()
-            if(tickDataCache.containsKey(hash)) {
-                tickDataCache[hash]!!
-            } else {
-                val count = it.vehiclesInBlock(it.egoVehicle.lane.road.block).size
-                tickDataCache[hash] = count
-                count
-            }
-        }.average()
+      val averageVehiclesInEgosBlock =
+          segment.tickData.map {
+              val hash = it.hashCode()
+              if(tickDataCache.containsKey(hash)) {
+                  tickDataCache[hash]!!
+              } else {
+                  val count = it.vehiclesInBlock(
+                      checkNotNull(it.egoVehicle) { "There is no ego in tick $it" }.lane.road.block)
+                      .size
+                  tickDataCache[hash] = count
+                  count
+              }
+          }.average()
     logFiner(
         "The average count of vehicles in Segment '$segment' for ego's block is: $averageVehiclesInEgosBlock")
     return averageVehiclesInEgosBlock

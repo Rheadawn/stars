@@ -18,8 +18,7 @@
 package tools.aqua.stars.core.tsc
 
 import kotlin.test.Test
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertFailsWith
 import tools.aqua.stars.core.*
 import tools.aqua.stars.core.tsc.builder.tsc
 
@@ -29,7 +28,7 @@ class TSCDuplicatedLabelsTest {
   /** Test duplicated node labels on same level throwing exception. */
   @Test
   fun `Test duplicated node labels on same level throwing exception`() {
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       tsc<
           SimpleEntity,
           SimpleTickData,
@@ -50,27 +49,21 @@ class TSCDuplicatedLabelsTest {
   /** Test duplicated node labels on different levels throwing no exception. */
   @Test
   fun `Test duplicated node labels on different levels throwing no exception`() {
-    assertDoesNotThrow {
-      tsc<
-          SimpleEntity,
-          SimpleTickData,
-          SimpleSegment,
-          SimpleTickDataUnit,
-          SimpleTickDataDifference> {
-        all("root") {
-          projections { projection("all") }
+    tsc<SimpleEntity, SimpleTickData, SimpleSegment, SimpleTickDataUnit, SimpleTickDataDifference> {
+      all("root") {
+        projections { projection("all") }
 
-          any("label") { optional("label") }
-        }
+        any("label") { optional("label") }
       }
     }
   }
+
   // endregion
   // region projection labels
   /** Test duplicated projection labels on same level throwing exception. */
   @Test
   fun `Test duplicated projection labels on same level throwing exception`() {
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       tsc<
           SimpleEntity,
           SimpleTickData,
@@ -78,8 +71,6 @@ class TSCDuplicatedLabelsTest {
           SimpleTickDataUnit,
           SimpleTickDataDifference> {
         all("root") {
-          condition { _ -> true }
-
           projections {
             projection("P1")
             projection("P1")
@@ -92,7 +83,7 @@ class TSCDuplicatedLabelsTest {
   /** Test duplicated projection labels on different levels throwing no exception. */
   @Test
   fun `Test duplicated projection labels on same level throwing exception 2`() {
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       tsc<
           SimpleEntity,
           SimpleTickData,
@@ -100,8 +91,6 @@ class TSCDuplicatedLabelsTest {
           SimpleTickDataUnit,
           SimpleTickDataDifference> {
         all("root") {
-          condition { _ -> true }
-
           projections {
             projection("P1")
             projectionRecursive("P1")
@@ -110,12 +99,13 @@ class TSCDuplicatedLabelsTest {
       }
     }
   }
+
   // endregion
   // region monitor labels
   /** Test duplicated monitor labels on same level throwing exception. */
   @Test
   fun `Test duplicated monitor labels on same level throwing exception`() {
-    assertThrows<IllegalStateException> {
+    assertFailsWith<IllegalStateException> {
       tsc<
           SimpleEntity,
           SimpleTickData,
@@ -123,8 +113,6 @@ class TSCDuplicatedLabelsTest {
           SimpleTickDataUnit,
           SimpleTickDataDifference> {
         all("root") {
-          condition { _ -> true }
-
           monitors {
             monitor("monitor1") { _ -> true }
             monitor("monitor1") { _ -> true }
@@ -137,20 +125,11 @@ class TSCDuplicatedLabelsTest {
   /** Test duplicated monitor labels on different levels throwing no exception. */
   @Test
   fun `Test duplicated monitor labels on different levels throwing no exception`() {
-    assertDoesNotThrow {
-      tsc<
-          SimpleEntity,
-          SimpleTickData,
-          SimpleSegment,
-          SimpleTickDataUnit,
-          SimpleTickDataDifference> {
-        all("root") {
-          condition { _ -> true }
+    tsc<SimpleEntity, SimpleTickData, SimpleSegment, SimpleTickDataUnit, SimpleTickDataDifference> {
+      all("root") {
+        monitors { monitor("monitor1") { _ -> true } }
 
-          monitors { monitor("monitor1") { _ -> true } }
-
-          any("label") { monitors { monitor("monitor1") { _ -> true } } }
-        }
+        any("label") { monitors { monitor("monitor1") { _ -> true } } }
       }
     }
   }

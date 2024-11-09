@@ -32,4 +32,13 @@ data class Location(val x: Double, val y: Double, val z: Double){
     fun distanceTo(other: Location): Double {
         return abs(sqrt((x - other.x).pow(2) + (y - other.y).pow(2) + (z - other.z).pow(2)))
     }
+
+    companion object {
+        /**
+         * Calculates the Euclidean distance between two locations, i.e., the square root of the sum of
+         * the squared ordinates.
+         */
+        fun euclideanDistance(loc1: Location, loc2: Location): Double =
+            sqrt((loc1.x - loc2.x).pow(2) + (loc1.y - loc2.y).pow(2) + (loc1.z - loc2.z).pow(2))
+    }
 }

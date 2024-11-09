@@ -134,26 +134,23 @@ fun convertJsonData(
         }
         val egoTickData = checkNotNull(referenceTickData).map { it.clone() }
 
-        // Remove all existing ego flags when useEveryVehicleAsEgo is set
-        if (useEveryVehicleAsEgo) {
-            egoTickData.forEach { tickData ->
-                tickData.actors.filterIsInstance<Vehicle>().forEach { it.isEgo = false }
-            }
-        }
+    // Remove all existing ego flags when useEveryVehicleAsEgo is set
+    if (useEveryVehicleAsEgo) {
+      egoTickData.forEach { tickData -> tickData.vehicles.forEach { it.isEgo = false } }
+    }
 
-        // Set egoVehicle flag for each TickData
-        var isTickWithoutEgo = false
-        egoTickData.forEach { tickData ->
-            if (!isTickWithoutEgo) {
-                val egoInTickData =
-                    tickData.actors.firstOrNull { it is Vehicle && it.id == egoVehicle.id } as? Vehicle
-                if (egoInTickData != null) {
-                    egoInTickData.isEgo = true
-                } else {
-                    isTickWithoutEgo = true
-                }
-            }
+    // Set egoVehicle flag for each TickData
+    var isTickWithoutEgo = false
+    egoTickData.forEach { tickData ->
+      if (!isTickWithoutEgo) {
+        val egoInTickData = tickData.vehicles.firstOrNull { it.id == egoVehicle.id }
+        if (egoInTickData != null) {
+          egoInTickData.isEgo = true
+        } else {
+          isTickWithoutEgo = true
         }
+      }
+    }
 
         // There were some simulation runs where some vehicles are not always there.
         // Therefore, check if the egoVehicle was found in each tick
@@ -172,16 +169,14 @@ fun convertJsonData(
  * @param simulationRun List of [TickData].
  */
 fun updateActorVelocityForSimulationRun(simulationRun: List<TickData>) {
-    for (i in 1 until simulationRun.size) {
-        val currentTick = simulationRun[i]
-        val previousTick = simulationRun[i - 1]
-        currentTick.actors.forEach { currentActor ->
-            if (currentActor is Vehicle) {
-                updateActorVelocityAndAcceleration(
-                    currentActor, previousTick.actors.firstOrNull { it.id == currentActor.id })
-            }
-        }
+  for (i in 1 until simulationRun.size) {
+    val currentTick = simulationRun[i]
+    val previousTick = simulationRun[i - 1]
+    currentTick.vehicles.forEach { currentActor ->
+      updateActorVelocityAndAcceleration(
+          currentActor, previousTick.vehicles.firstOrNull { it.id == currentActor.id })
     }
+  }
 }
 
 /**
@@ -744,20 +739,20 @@ fun segmentByBlock(
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
 
-    simulationRuns.forEach { (simulationRunId, simulationRun) ->
-        val blockRanges = mutableListOf<Pair<TickDataUnitSeconds, TickDataUnitSeconds>>()
-        var prevBlockID = simulationRun.first().egoVehicle.lane.road.block.id
-        var firstTickInBlock = simulationRun.first().currentTick
+  simulationRuns.forEach { (simulationRunId, simulationRun) ->
+    val blockRanges = mutableListOf<Pair<TickDataUnitSeconds, TickDataUnitSeconds>>()
+    var prevBlockID = checkNotNull(simulationRun.first().egoVehicle).lane.road.block.id
+    var firstTickInBlock = simulationRun.first().currentTick
 
-        simulationRun.forEachIndexed { index, tick ->
-            val currentBlockID = tick.egoVehicle.lane.road.block.id
-            if (currentBlockID != prevBlockID) {
-                blockRanges += (firstTickInBlock to simulationRun[index - 1].currentTick)
-                prevBlockID = currentBlockID
-                firstTickInBlock = tick.currentTick
-            }
-        }
-        blockRanges += (firstTickInBlock to simulationRun.last().currentTick)
+    simulationRun.forEachIndexed { index, tick ->
+      val currentBlockID = checkNotNull(tick.egoVehicle).lane.road.block.id
+      if (currentBlockID != prevBlockID) {
+        blockRanges += (firstTickInBlock to simulationRun[index - 1].currentTick)
+        prevBlockID = currentBlockID
+        firstTickInBlock = tick.currentTick
+      }
+    }
+    blockRanges += (firstTickInBlock to simulationRun.last().currentTick)
 
         blockRanges.forEachIndexed { _, blockRange ->
             val mainSegment =

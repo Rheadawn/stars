@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The STARS Project Authors
+ * Copyright 2024 The STARS Project Authors
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,35 +15,38 @@
  * limitations under the License.
  */
 
-package tools.aqua.stars.core.metric.providers
+package tools.aqua.stars.core.hooks.defaulthooks
 
-import tools.aqua.stars.core.evaluation.TSCEvaluation
-import tools.aqua.stars.core.tsc.projection.TSCProjection
+import tools.aqua.stars.core.hooks.EvaluationHookResult
+import tools.aqua.stars.core.hooks.PreTSCEvaluationHook
 import tools.aqua.stars.core.types.*
 
 /**
- * The [ProjectionMetricProvider] implements the [EvaluationMetricProvider] and provides an
- * [evaluate] function which gets a [TSCProjection] which is called during the evaluation phase.
+ * [PreTSCEvaluationHook] that checks if a TSC has at least minNodes nodes.
  *
  * @param E [EntityType].
  * @param T [TickDataType].
  * @param S [SegmentType].
  * @param U [TickUnit].
  * @param D [TickDifference].
- * @see TSCEvaluation.runEvaluation
+ * @param minNodes The minimum number of nodes the TSC must have.
+ * @param failPolicy The [EvaluationHookResult] to return if the TSC has less minNodes nodes.
  */
-interface ProjectionMetricProvider<
+open class MinNodesInTSCHook<
     E : EntityType<E, T, S, U, D>,
     T : TickDataType<E, T, S, U, D>,
     S : SegmentType<E, T, S, U, D>,
     U : TickUnit<U, D>,
-    D : TickDifference<D>> : EvaluationMetricProvider<E, T, S, U, D> {
-
-  /**
-   * Evaluate the metric based on the given parameter.
-   *
-   * @param projection The current [TSCProjection].
-   * @return The evaluation result.
-   */
-  fun evaluate(projection: TSCProjection<E, T, S, U, D>): Any?
+    D : TickDifference<D>>(
+    minNodes: Int,
+    failPolicy: EvaluationHookResult = EvaluationHookResult.SKIP,
+) :
+    PreTSCEvaluationHook<E, T, S, U, D>(
+        identifier = "EmptyTSCHook",
+        evaluationFunction = { tsc ->
+          if (tsc.count() >= minNodes) EvaluationHookResult.OK else failPolicy
+        }) {
+  init {
+    require(minNodes >= 0) { "minNodes must be >= 0" }
+  }
 }
