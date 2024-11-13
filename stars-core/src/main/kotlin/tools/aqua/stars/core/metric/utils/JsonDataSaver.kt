@@ -25,6 +25,7 @@ import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.PREVIOUS_EV
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.applicationStartTimeString
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.baselineDirectory
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.comparedResultsFolder
+import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.folderName
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.serializedResultsFolder
 
 /**
@@ -59,7 +60,7 @@ fun String.saveAsJsonFile(filePathWithExtension: String): File {
  */
 fun SerializableResult.saveAsJsonFile(): File {
   val resultingPath =
-      "$serializedResultsFolder/$applicationStartTimeString/$source/$identifier.json"
+      "$serializedResultsFolder/$folderName/$source/$identifier.json"
   getJsonString().saveAsJsonFile(resultingPath)
   return File(resultingPath)
 }
@@ -76,7 +77,7 @@ fun SerializableResult.saveAsJsonFile(): File {
  */
 fun SerializableResultComparison.saveAsJsonFile(comparedToBaseline: Boolean): File {
   val resultingPath =
-      "$comparedResultsFolder/$applicationStartTimeString/${
+      "$comparedResultsFolder/$folderName/${
             if(comparedToBaseline){"/${baselineDirectory.replace('/', '-')}"}
             else{"/$PREVIOUS_EVALUATION_SERIALIZED_RESULT_IDENTIFIER"}
           }/${source}/[${verdict.shortString}]_comparison_${identifier}.json"

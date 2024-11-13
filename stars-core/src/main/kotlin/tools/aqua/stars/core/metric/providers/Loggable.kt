@@ -21,6 +21,7 @@ import java.io.File
 import java.util.logging.*
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.activeLoggers
+import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.folderName
 
 /** This interface can be implemented to be able to log data into the stdout and log files. */
 @Suppress("unused")
@@ -116,7 +117,7 @@ interface Loggable {
 
       val currentTimeAndDate = ApplicationConstantsHolder.applicationStartTimeString
       val logFolderFile =
-          File("${ApplicationConstantsHolder.logFolder}/$currentTimeAndDate/metrics/$name").also {
+          File("${ApplicationConstantsHolder.logFolder}/$folderName/metrics/$name").also {
             it.mkdirs()
           }
       val file = "$logFolderFile/$name-${currentTimeAndDate}"

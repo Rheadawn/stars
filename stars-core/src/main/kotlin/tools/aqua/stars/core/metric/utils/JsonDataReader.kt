@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import tools.aqua.stars.core.metric.serialization.SerializableResult
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.applicationStartTimeString
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.baselineDirectory
+import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.folderName
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.serializedResultsFolder
 
 /**
@@ -77,7 +78,7 @@ val previousResults: Map<String, List<SerializableResult>>
 fun getPreviousSerializationResultDirectory(): File? =
     File(serializedResultsFolder)
         .listFiles()
-        ?.filter { it.name != baselineDirectory && it.name != applicationStartTimeString }
+        ?.filter { it.name != baselineDirectory && it.name != folderName }
         ?.maxByOrNull { it.name }
 
 /**

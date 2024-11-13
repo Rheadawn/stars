@@ -35,7 +35,7 @@ class PredicateContext<
     T : TickDataType<E, T, S, U, D>,
     S : SegmentType<E, T, S, U, D>,
     U : TickUnit<U, D>,
-    D : TickDifference<D>>(val segment: S, private val globalCache: PredicateCache<E, T, S, U, D>) {
+    D : TickDifference<D>>(val segment: S, private val globalCache: PredicateCache<E, T, S, U, D> = PredicateCache()) {
 
   /** Identifier of the primary entity. */
   var primaryEntityId: Int = segment.primaryEntityId

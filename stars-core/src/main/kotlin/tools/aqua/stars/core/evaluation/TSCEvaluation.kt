@@ -37,6 +37,7 @@ import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.application
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.comparedResultsFolder
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.logFolder
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.serializedResultsFolder
+import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.folderName
 import tools.aqua.stars.core.metric.utils.saveAsJsonFiles
 import tools.aqua.stars.core.tsc.TSC
 import tools.aqua.stars.core.tsc.instance.TSCInstanceNode
@@ -342,13 +343,13 @@ class TSCEvaluation<
 
     val serializableMetrics = metricProviders.filterIsInstance<Serializable>()
     if (serializableMetrics.any()) {
-      ApplicationConstantsHolder.writeMetaInfo("$logFolder/$applicationStartTimeString/")
+      ApplicationConstantsHolder.writeMetaInfo("$logFolder/$folderName/")
 
       // Write JSON files of all Serializable metrics
       if (writeSerializedResults) {
         println("Writing serialized results")
         ApplicationConstantsHolder.writeMetaInfo(
-            "$serializedResultsFolder/$applicationStartTimeString/")
+            "$serializedResultsFolder/$folderName/")
         serializableMetrics.forEach { t -> t.writeSerializedResults() }
       }
 
@@ -356,7 +357,7 @@ class TSCEvaluation<
       if (compareToBaselineResults) {
         println("Comparing to baseline")
         ApplicationConstantsHolder.writeMetaInfo(
-            "$comparedResultsFolder/$applicationStartTimeString/")
+            "$comparedResultsFolder/$folderName/")
         serializableMetrics.compareToBaselineResults().let {
           resultsReproducedFromBaseline = it.noMismatch()
 
@@ -368,7 +369,7 @@ class TSCEvaluation<
       if (compareToPreviousRun) {
         println("Comparing to previous run")
         ApplicationConstantsHolder.writeMetaInfo(
-            "$comparedResultsFolder/$applicationStartTimeString/")
+            "$comparedResultsFolder/$folderName/")
         serializableMetrics.compareToPreviousResults().let {
           resultsReproducedFromPreviousRun = it.noMismatch()
 
