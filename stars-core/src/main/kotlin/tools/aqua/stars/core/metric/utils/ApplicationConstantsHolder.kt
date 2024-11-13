@@ -46,6 +46,10 @@ object ApplicationConstantsHolder {
   val applicationStartTimeString: String =
       applicationStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
 
+  var folderName: String = "test_run"
+  var segmentLengthsInSeconds: List<Double> = listOf()
+  var segmentLengthsInMeters: List<Double> = listOf()
+
   /** Separator for console output. */
   const val CONSOLE_SEPARATOR =
       "===================================================================================================="

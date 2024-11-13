@@ -17,6 +17,7 @@
 
 package tools.aqua.stars.importer.carla
 
+import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder
 import tools.aqua.stars.data.av.dataclasses.*
 import tools.aqua.stars.importer.carla.dataclasses.JsonTickData
 import tools.aqua.stars.importer.carla.dataclasses.JsonVehicle
@@ -242,7 +243,7 @@ fun sliceRunIntoSegments(
     cleanJsonData(blocks, jsonSimulationRun)
     val simulationRuns = convertJsonData(blocks, jsonSimulationRun, useEveryVehicleAsEgo, simulationRunId)
 
-    return when (segmentationBy.type) {
+    val segments = when (segmentationBy.type) {
         Segmentation.Type.STATIC_SEGMENT_LENGTH_SECONDS -> staticSegmentLengthInSeconds(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue)
         Segmentation.Type.STATIC_SEGMENT_LENGTH_METERS -> staticSegmentLengthInMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED -> dynamicSegmentLengthForSpeedInMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue, maxSegmentTickCount)
@@ -272,6 +273,11 @@ fun sliceRunIntoSegments(
         Segmentation.Type.SLIDING_WINDOW_ROTATING -> slidingWindowRotatingWindowSize(simulationRuns, minSegmentTickCount, segmentationBy.secondaryValue.toInt(), segmentationBy.addJunctions)
         Segmentation.Type.SLIDING_WINDOW_BY_TRAFFIC_DENSITY -> slidingWindowByTrafficDensity(simulationRuns, minSegmentTickCount, segmentationBy.secondaryValue.toInt(), segmentationBy.addJunctions)
     }
+
+    ApplicationConstantsHolder.segmentLengthsInSeconds = segments.map { getLengthOfRunInSeconds(it.tickData) }
+    ApplicationConstantsHolder.segmentLengthsInMeters = segments.map { getLengthOfRunInMeters(it.tickData) }
+
+    return segments
 }
 
 fun getJunctionExtensionBeforeStart(
