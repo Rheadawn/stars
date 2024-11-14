@@ -58,12 +58,12 @@ class MissedPredicateCombinationsPerTSCMetric<
     U : TickUnit<U, D>,
     D : TickDifference<D>>(
     override val dependsOn: ValidTSCInstancesPerTSCMetric<E, T, S, U, D>,
-    override val loggerIdentifier: String = "missed-predicate-combinations",
+    override val loggerIdentifier: String = "missed-and-found-predicate-combinations",
     override val logger: Logger = Loggable.getLogger(loggerIdentifier)
 ) : PostEvaluationMetricProvider<E, T, S, U, D>, Serializable, Loggable {
 
   /** Holds the evaluation result after calling [postEvaluate]. */
-  private var evaluationResultCache: Map<TSC<E, T, S, U, D>, Set<PredicateCombination>>? = null
+  private var evaluationResultCache: Map<TSC<E, T, S, U, D>, Pair<Set<PredicateCombination>,Set<PredicateCombination>>>? = null
 
   /**
    * Returns a [Map] of all missing [PredicateCombination]s for all [TSC]s that are calculated by
@@ -71,7 +71,7 @@ class MissedPredicateCombinationsPerTSCMetric<
    *
    * @return The [Map] of all missing [PredicateCombination]s to its associated [TSC].
    */
-  override fun postEvaluate(): Map<TSC<E, T, S, U, D>, Set<PredicateCombination>> =
+  override fun postEvaluate(): Map<TSC<E, T, S, U, D>, Pair<Set<PredicateCombination>,Set<PredicateCombination>>> =
       evaluationResultCache
           ?: dependsOn
               .getState()
@@ -88,10 +88,10 @@ class MissedPredicateCombinationsPerTSCMetric<
     val evaluationResult = postEvaluate()
     println(
         "\n$CONSOLE_SEPARATOR\n$CONSOLE_INDENT Missing Predicate Combinations Per TSC \n$CONSOLE_SEPARATOR")
-    evaluationResult.forEach { (tsc, missedPredicates) ->
+    evaluationResult.forEach { (tsc, missedAndFoundPredicates) ->
       logInfo(
-          "Count of missing predicate combinations for tsc '${tsc.identifier}': ${missedPredicates.size}.")
-      missedPredicates
+          "Count of missing predicate combinations for tsc '${tsc.identifier}': ${missedAndFoundPredicates.first.size}.")
+      missedAndFoundPredicates.first
           .sortedWith(compareBy<PredicateCombination> { it.predicate1 }.thenBy { it.predicate2 })
           .forEach { logFine(it) }
       logFine()
@@ -109,13 +109,13 @@ class MissedPredicateCombinationsPerTSCMetric<
   private fun getAllMissingPredicateCombinationsForTSC(
       tsc: TSC<E, T, S, U, D>,
       tscInstances: List<TSCInstanceNode<E, T, S, U, D>>
-  ): Set<PredicateCombination> {
+  ): Pair<Set<PredicateCombination>,Set<PredicateCombination>> {
     // Get all possible predicate combinations
     val possiblePredicateCombinations = getAllPredicateCombinations(tsc.possibleTSCInstances)
     // Get all occurred predicate combinations
     val occurredPredicateCombinations = getAllPredicateCombinations(tscInstances)
     // Return predicate combinations that have not occurred
-    return possiblePredicateCombinations.minus(occurredPredicateCombinations)
+    return possiblePredicateCombinations.minus(occurredPredicateCombinations) to occurredPredicateCombinations
   }
 
   /**
@@ -150,13 +150,12 @@ class MissedPredicateCombinationsPerTSCMetric<
   }
 
   override fun getSerializableResults(): List<SerializablePredicateCombinationResult> =
-      evaluationResultCache?.map { (tsc, predicates) ->
-        val resultList = predicates.map { it.predicate1 to it.predicate2 }
+      evaluationResultCache?.map { (tsc, missedAndFound) ->
         SerializablePredicateCombinationResult(
             identifier = tsc.identifier,
             source = loggerIdentifier,
-            tsc = SerializableTSCNode(tsc.rootNode),
-            count = resultList.size,
-            value = resultList)
+            missed = missedAndFound.first.size,
+            found = missedAndFound.second.size,
+            value = listOf())
       } ?: emptyList()
 }

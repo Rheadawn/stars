@@ -146,6 +146,7 @@ class InvalidTSCInstancesPerTSCMetric<
             identifier = tsc.identifier,
             source = loggerIdentifier,
             count = resultList.size,
+            featureCount = 0,
             value = resultList)
       }
 }

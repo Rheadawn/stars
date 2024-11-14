@@ -47,6 +47,7 @@ object ApplicationConstantsHolder {
       applicationStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
 
   var folderName: String = "test_run"
+  var featureName: String = "Overtaking"
   var segmentLengthsInSeconds: List<Double> = listOf()
   var segmentLengthsInMeters: List<Double> = listOf()
 

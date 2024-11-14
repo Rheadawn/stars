@@ -27,7 +27,6 @@ import tools.aqua.stars.core.tsc.TSC
  *
  * @property identifier The identifier of this specific result.
  * @property source The source (i.e. the metric) which produced this result.
- * @property tsc The evaluated [TSC].
  * @property count The size of the [value].
  * @property value The value that should be serialized.
  */
@@ -35,7 +34,7 @@ import tools.aqua.stars.core.tsc.TSC
 data class SerializablePredicateCombinationResult(
     override val identifier: String,
     override val source: String,
-    val tsc: SerializableTSCNode,
-    val count: Int,
+    val found: Int,
+    val missed: Int,
     override val value: List<Pair<String, String>>,
 ) : SerializableResult()

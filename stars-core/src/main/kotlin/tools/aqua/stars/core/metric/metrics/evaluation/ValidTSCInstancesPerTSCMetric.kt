@@ -22,15 +22,12 @@ package tools.aqua.stars.core.metric.metrics.evaluation
 import java.util.logging.Logger
 import tools.aqua.stars.core.metric.providers.*
 import tools.aqua.stars.core.metric.serialization.SerializableTSCOccurrenceResult
+import tools.aqua.stars.core.metric.serialization.tsc.SerializableTSCEdge
 import tools.aqua.stars.core.metric.serialization.tsc.SerializableTSCNode
 import tools.aqua.stars.core.metric.serialization.tsc.SerializableTSCOccurrence
+import tools.aqua.stars.core.metric.utils.*
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.CONSOLE_INDENT
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.CONSOLE_SEPARATOR
-import tools.aqua.stars.core.metric.utils.getCSVString
-import tools.aqua.stars.core.metric.utils.getPlot
-import tools.aqua.stars.core.metric.utils.plotDataAsBarChart
-import tools.aqua.stars.core.metric.utils.plotDataAsLineChart
-import tools.aqua.stars.core.metric.utils.saveAsCSVFile
 import tools.aqua.stars.core.tsc.TSC
 import tools.aqua.stars.core.tsc.instance.TSCInstance
 import tools.aqua.stars.core.tsc.instance.TSCInstanceNode
@@ -230,8 +227,39 @@ class ValidTSCInstancesPerTSCMetric<
             identifier = tsc.identifier,
             source = this@ValidTSCInstancesPerTSCMetric.loggerIdentifier,
             count = resultList.size,
-            value = resultList)
+            featureCount = getFeatureCount(ApplicationConstantsHolder.featureName, resultList),
+            value = listOf())
       }
+
+    private fun getFeatureCount(featureName: String, tscList: List<SerializableTSCOccurrence>): Int {
+        var count = 0
+        for (tsc in tscList) {
+            if (tsc.tscInstance.label.lowercase().trim() == featureName) {
+                count++
+            } else {
+                if (outgoingEdgesContainFeature(tsc.tscInstance.outgoingEdges, featureName)) {
+                    count++
+                }
+            }
+        }
+        return count
+    }
+
+    private fun outgoingEdgesContainFeature(outgoingEdges: List<SerializableTSCEdge>, featureName: String): Boolean {
+        var containsFeature = false
+
+        for (edge in outgoingEdges) {
+            if (edge.destination.label.lowercase().trim() == featureName) {
+                containsFeature = true
+            } else {
+                if(outgoingEdgesContainFeature(edge.destination.outgoingEdges, featureName)){
+                    containsFeature = true
+                }
+            }
+        }
+
+        return containsFeature
+    }
 
   // region Plot
 

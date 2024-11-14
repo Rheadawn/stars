@@ -34,5 +34,6 @@ data class SerializableTSCOccurrenceResult(
     override val identifier: String,
     override val source: String,
     val count: Int,
+    val featureCount: Int,
     override val value: List<SerializableTSCOccurrence>,
 ) : SerializableResult()

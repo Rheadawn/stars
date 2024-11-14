@@ -25,7 +25,10 @@ import tools.aqua.stars.core.metric.providers.Serializable
 import tools.aqua.stars.core.metric.providers.Stateful
 import tools.aqua.stars.core.metric.providers.TSCAndTSCInstanceNodeMetricProvider
 import tools.aqua.stars.core.metric.serialization.SerializableTSCResult
+import tools.aqua.stars.core.metric.serialization.tsc.SerializableTSCEdge
 import tools.aqua.stars.core.metric.serialization.tsc.SerializableTSCNode
+import tools.aqua.stars.core.metric.serialization.tsc.SerializableTSCOccurrence
+import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.CONSOLE_INDENT
 import tools.aqua.stars.core.metric.utils.ApplicationConstantsHolder.CONSOLE_SEPARATOR
 import tools.aqua.stars.core.tsc.TSC
@@ -131,6 +134,38 @@ class MissedTSCInstancesPerTSCMetric<
             identifier = tsc.identifier,
             source = loggerIdentifier,
             count = resultList.size,
-            value = resultList)
+            featureCount = getFeatureCount(ApplicationConstantsHolder.featureName, resultList),
+            value = listOf()
+        )
       }
+
+    private fun getFeatureCount(featureName: String, tscList: List<SerializableTSCNode>): Int {
+        var count = 0
+        for (tsc in tscList) {
+            if (tsc.label.lowercase().trim() == featureName) {
+                count++
+            } else {
+                if (outgoingEdgesContainFeature(tsc.outgoingEdges, featureName)) {
+                    count++
+                }
+            }
+        }
+        return count
+    }
+
+    private fun outgoingEdgesContainFeature(outgoingEdges: List<SerializableTSCEdge>, featureName: String): Boolean {
+        var containsFeature = false
+
+        for (edge in outgoingEdges) {
+            if (edge.destination.label.lowercase().trim() == featureName) {
+                containsFeature = true
+            } else {
+                if(outgoingEdgesContainFeature(edge.destination.outgoingEdges, featureName)){
+                    containsFeature = true
+                }
+            }
+        }
+
+        return containsFeature
+    }
 }
