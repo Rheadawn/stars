@@ -343,7 +343,7 @@ class TSCEvaluation<
 
     val serializableMetrics = metricProviders.filterIsInstance<Serializable>()
     if (serializableMetrics.any()) {
-      ApplicationConstantsHolder.writeMetaInfo("$logFolder/$folderName/")
+      //ApplicationConstantsHolder.writeMetaInfo("$logFolder/$folderName/")
 
       // Write JSON files of all Serializable metrics
       if (writeSerializedResults) {

@@ -112,29 +112,29 @@ interface Loggable {
      * @return A [Logger] with the predefined [FileHandler].
      */
     fun getLogger(name: String): Logger = run {
-      // https://www.logicbig.com/tutorials/core-java-tutorial/logging/customizing-default-format.html
-      System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
-
-      val currentTimeAndDate = ApplicationConstantsHolder.applicationStartTimeString
-      val logFolderFile =
-          File("${ApplicationConstantsHolder.logFolder}/$folderName/metrics/$name").also {
-            it.mkdirs()
-          }
-      val file = "$logFolderFile/$name-${currentTimeAndDate}"
+//      // https://www.logicbig.com/tutorials/core-java-tutorial/logging/customizing-default-format.html
+//      System.setProperty("java.util.logging.SimpleFormatter.format", "%5\$s %n")
+//
+//      val currentTimeAndDate = ApplicationConstantsHolder.applicationStartTimeString
+//      val logFolderFile =
+//          File("${ApplicationConstantsHolder.logFolder}/$folderName/metrics/$name").also {
+//            it.mkdirs()
+//          }
+//      val file = "$logFolderFile/$name-${currentTimeAndDate}"
 
       return@run Logger.getAnonymousLogger()
-          .apply {
-            useParentHandlers = false
-            level = Level.FINEST
-
-            addHandler(getLoggerHandler(file, Level.SEVERE))
-            addHandler(getLoggerHandler(file, Level.WARNING))
-            addHandler(getLoggerHandler(file, Level.INFO))
-            addHandler(getLoggerHandler(file, Level.FINE))
-            addHandler(getLoggerHandler(file, Level.FINER))
-            addHandler(getLoggerHandler(file, Level.FINEST))
-          }
-          .also { activeLoggers.add(it) }
+//          .apply {
+////            useParentHandlers = false
+////            level = Level.FINEST
+//
+//            //addHandler(getLoggerHandler(file, Level.SEVERE))
+//            //addHandler(getLoggerHandler(file, Level.WARNING))
+//            //addHandler(getLoggerHandler(file, Level.INFO))
+//            //addHandler(getLoggerHandler(file, Level.FINE))
+//            //addHandler(getLoggerHandler(file, Level.FINER))
+//            //addHandler(getLoggerHandler(file, Level.FINEST))
+//          }
+//          .also { activeLoggers.add(it) }
     }
 
     private fun getLoggerHandler(file: String, level: Level) =
