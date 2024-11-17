@@ -30,7 +30,18 @@ import kotlinx.serialization.json.Json
  * folder. It is used to persist a consistent folder name for all exported files.
  */
 object ApplicationConstantsHolder {
-  /** Holds the [LocalDateTime] at the start of the application. */
+    var segmentationType: String = "BY_BLOCK"
+    var primarySegmentationValue: Double = 0.0
+    var secondarySegmentationValue: Double = 0.0
+    var tertiarySegmentationValue: Double = 0.0
+    var allEgo: Boolean = false
+
+    var folderName: String = "test_run"
+    var featureName: String = "Overtaking"
+    var segmentLengthsInSeconds: List<Double> = listOf()
+    var segmentLengthsInMeters: List<Double> = listOf()
+
+    /** Holds the [LocalDateTime] at the start of the application. */
   val applicationStartTime: LocalDateTime = LocalDateTime.now()
 
   /** Holds the [LocalDateTime] at the end of the experiment. */
@@ -45,11 +56,6 @@ object ApplicationConstantsHolder {
   /** Holds the [LocalDateTime] at the start of the application in the yyyy-MM-dd-HH-mm format. */
   val applicationStartTimeString: String =
       applicationStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
-
-  var folderName: String = "test_run"
-  var featureName: String = "Overtaking"
-  var segmentLengthsInSeconds: List<Double> = listOf()
-  var segmentLengthsInMeters: List<Double> = listOf()
 
   /** Separator for console output. */
   const val CONSOLE_SEPARATOR =
