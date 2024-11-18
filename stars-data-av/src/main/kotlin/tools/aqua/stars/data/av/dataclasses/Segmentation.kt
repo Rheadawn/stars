@@ -24,7 +24,7 @@ class Segmentation() {
 
     @Suppress("FunctionName")
     companion object {
-        private fun STATIC_SEGMENT_LENGTH_SECONDS(windowSize: Double, overlapPercentage: Double): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_SECONDS, value = windowSize, secondaryValue = max(((1-overlapPercentage)*windowSize),1.0))
+        private fun STATIC_SEGMENT_LENGTH_SECONDS(windowSize: Double, stepSize: Double): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_SECONDS, value = windowSize, secondaryValue = stepSize)
         private fun STATIC_SEGMENT_LENGTH_METERS(windowSize: Double, stepSize: Double): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_METERS, value = windowSize, secondaryValue = stepSize)
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(lookAhead: Double, scalar: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED, value = lookAhead, secondaryValue = scalar, tertiaryValue = stepSize)
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(lookAhead: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1, value = lookAhead, secondaryValue = stepSize)
@@ -55,7 +55,7 @@ class Segmentation() {
 
         fun fromConsole(segmentationType: String, segmentationValue: Double?, secondarySegmentationValue: Double?, tertiarySegmentationValue: Double?, addJunctions: Boolean): Segmentation {
             return when (segmentationType) {
-                "STATIC_SEGMENT_LENGTH_SECONDS" -> STATIC_SEGMENT_LENGTH_SECONDS(segmentationValue?: 60.0, secondarySegmentationValue?: 0.25)
+                "STATIC_SEGMENT_LENGTH_SECONDS" -> STATIC_SEGMENT_LENGTH_SECONDS(segmentationValue?: 60.0, secondarySegmentationValue?: 10.0)
                 "STATIC_SEGMENT_LENGTH_METERS" -> STATIC_SEGMENT_LENGTH_METERS(segmentationValue?: 70.0, secondarySegmentationValue?: 5.0)
                 "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(segmentationValue?: 30.0, secondarySegmentationValue?: 300.0, tertiarySegmentationValue?: 5.0)
                 "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(segmentationValue?: 30.0, secondarySegmentationValue?: 5.0)
