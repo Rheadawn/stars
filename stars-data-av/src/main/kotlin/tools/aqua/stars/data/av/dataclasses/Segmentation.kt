@@ -26,7 +26,7 @@ class Segmentation() {
     companion object {
         private fun STATIC_SEGMENT_LENGTH_SECONDS(windowSize: Double, stepSize: Double): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_SECONDS, value = windowSize, secondaryValue = stepSize)
         private fun STATIC_SEGMENT_LENGTH_METERS(windowSize: Double, stepSize: Double): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_METERS, value = windowSize, secondaryValue = stepSize)
-        private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(lookAhead: Double, scalar: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED, value = lookAhead, secondaryValue = scalar, tertiaryValue = stepSize)
+        private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(lookAhead: Double, scalar: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED, value = lookAhead, secondaryValue = max(scalar,1.0), tertiaryValue = stepSize)
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(lookAhead: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1, value = lookAhead, secondaryValue = stepSize)
         private fun SLIDING_WINDOW_MULTISTART_METERS(windowSize1: Double, windowSize2: Double, windowSize3: Double): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_METERS, value = windowSize1, secondaryValue = windowSize2, tertiaryValue = windowSize3)
         private fun SLIDING_WINDOW_MULTISTART_SECONDS(windowSize1: Double, windowSize2: Double, windowSize3: Double): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_SECONDS, value = windowSize1, secondaryValue = windowSize2, tertiaryValue = windowSize3)

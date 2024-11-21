@@ -464,13 +464,14 @@ fun slideMeterWindowOverRun(
 
 fun getLastValidTickInRunForMeters(simulationRun: List<TickData>, windowSize: Double): Int {
     var distanceTravelled = 0.0
-    val lastLocation = simulationRun[simulationRun.size-1].egoVehicleNotNull.location
+    var lastLocation = simulationRun[simulationRun.size-1].egoVehicleNotNull.location
     for(i in simulationRun.size-2 downTo 0){
         val currentLocation = simulationRun[i].egoVehicleNotNull.location
         distanceTravelled += abs(currentLocation.distanceTo(lastLocation))
         if(distanceTravelled >= windowSize){
             return i
         }
+        lastLocation = currentLocation
     }
     return 0
 }
@@ -480,31 +481,19 @@ fun getIndexOfTickInXMeters(
     start: Int,
     meters: Double
 ): Pair<Int,Double> {
-    var previousPositionOnLane = tickData[start].egoVehicleNotNull.positionOnLane
-    var previousRoadId = tickData[start].egoVehicleNotNull.lane.road.id
-    var distanceTraveled = 0.0
-    var i = start+1
+    var distanceTravelled = 0.0
 
-    while(i < tickData.size){
-        val currentPositionOnLane = tickData[i].egoVehicleNotNull.positionOnLane
-        val currentRoadId = tickData[i].egoVehicleNotNull.lane.road.id
-
-        distanceTraveled += if(currentRoadId == previousRoadId){
-            abs(currentPositionOnLane - previousPositionOnLane)
-        }else{
-            tickData[i].egoVehicleNotNull.location.distanceTo(tickData[i-1].egoVehicleNotNull.location)
+    for(i in start until tickData.size-1){
+        val currentLocation = tickData[i].egoVehicleNotNull.location
+        val nextLocation = tickData[i+1].egoVehicleNotNull.location
+        val distance = abs(currentLocation.distanceTo(nextLocation))
+        distanceTravelled += distance
+        if(distanceTravelled >= meters){
+            return i+1 to distanceTravelled
         }
-
-        if (distanceTraveled >= meters) {
-            return i to distanceTraveled
-        }
-
-        previousPositionOnLane = currentPositionOnLane
-        previousRoadId = currentRoadId
-        i++
     }
 
-    return tickData.size-1 to distanceTraveled
+    return tickData.size-1 to distanceTravelled
 }
 
 // uses maxSegmentTickCount
