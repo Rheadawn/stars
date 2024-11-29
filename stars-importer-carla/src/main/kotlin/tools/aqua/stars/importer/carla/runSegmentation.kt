@@ -516,7 +516,9 @@ fun dynamicSegmentLengthForSpeedInMeters(
         while (i <= lastValidTick) {
             var startIndex = i
             val currentSpeed = simulationRun[startIndex].egoVehicleNotNull.effVelocityInKmPH
-            val windowSize = lookAhead * (1+(currentSpeed/scalar))
+            //new: f(x)=lookahead + scalar * speed
+            //old: f(x)=lookahead * (1 + speed/scalar)
+            val windowSize = lookAhead + (scalar * currentSpeed)
 
             val lastTickAndTraveledDistance = getIndexOfTickInXMeters(simulationRun, startIndex, windowSize)
             var lastTickInWindow = lastTickAndTraveledDistance.first
