@@ -21,6 +21,12 @@ data class SerializableCVResult(
     override val value: Int,
     val cvForSeconds: Double,
     val conformityRateSeconds: Double,
+    val minSeconds: Double,
+    val maxSeconds: Double,
+    val averageSeconds: Double,
     val conformityRateMeters: Double,
     val cvForMeters: Double,
+    val minMeters: Double,
+    val maxMeters: Double,
+    val averageMeters: Double
 ): SerializableResult()

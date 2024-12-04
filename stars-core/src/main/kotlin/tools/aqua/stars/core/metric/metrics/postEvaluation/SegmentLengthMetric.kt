@@ -39,6 +39,8 @@ class SegmentLengthMetric<
 ) : PostEvaluationMetricProvider<E, T, S, U, D>, Serializable, Loggable {
     var tscList: List<TSC<E, T, S, U, D>> = listOf()
 
+    private var segmentLengthsInSeconds: List<Double> = listOf()
+    private var segmentLengthsInMeters: List<Double> = listOf()
     private var coefficientVariationForSeconds: Double = 0.0
     private var conformityRateSeconds: Double = 0.0
     private var coefficientVariationForMeters: Double = 0.0
@@ -47,8 +49,8 @@ class SegmentLengthMetric<
     override fun postEvaluate(){
         tscList = dependsOn.getState().keys.toList()
 
-        val segmentLengthsInSeconds = ApplicationConstantsHolder.segmentLengthsInSeconds
-        val segmentLengthsInMeters = ApplicationConstantsHolder.segmentLengthsInMeters
+        segmentLengthsInSeconds = ApplicationConstantsHolder.segmentLengthsInSeconds
+        segmentLengthsInMeters = ApplicationConstantsHolder.segmentLengthsInMeters
 
         coefficientVariationForSeconds = calculateCV(segmentLengthsInSeconds)
         conformityRateSeconds = calculateConformityRate(10.0, 60.0, segmentLengthsInSeconds)
@@ -76,8 +78,14 @@ class SegmentLengthMetric<
                 value = 0,
                 cvForSeconds = coefficientVariationForSeconds,
                 conformityRateSeconds = conformityRateSeconds,
+                minSeconds = segmentLengthsInSeconds.minOrNull() ?: 0.0,
+                maxSeconds = segmentLengthsInSeconds.maxOrNull() ?: Double.MAX_VALUE,
+                averageSeconds = segmentLengthsInSeconds.average(),
                 cvForMeters = coefficientVariationForMeters,
-                conformityRateMeters = conformityRateMeters
+                conformityRateMeters = conformityRateMeters,
+                minMeters = segmentLengthsInMeters.minOrNull() ?: 0.0,
+                maxMeters = segmentLengthsInMeters.maxOrNull() ?: Double.MAX_VALUE,
+                averageMeters = segmentLengthsInMeters.average()
             )
         }
 
