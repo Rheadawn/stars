@@ -228,7 +228,7 @@ class ValidTSCInstancesPerTSCMetric<
             source = this@ValidTSCInstancesPerTSCMetric.loggerIdentifier,
             count = resultList.size,
             featureCount = getFeatureCount(ApplicationConstantsHolder.featureName, resultList),
-            value = listOf())
+            value = resultList)
       }
 
     private fun getFeatureCount(featureName: String, tscList: List<SerializableTSCOccurrence>): Int {

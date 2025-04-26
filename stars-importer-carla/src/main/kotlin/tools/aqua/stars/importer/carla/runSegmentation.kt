@@ -248,8 +248,10 @@ fun sliceRunIntoSegments(
         Segmentation.Type.STATIC_SEGMENT_LENGTH_METERS -> staticSegmentLengthInMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.addJunctions)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED -> dynamicSegmentLengthForSpeedInMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue, maxSegmentTickCount, segmentationBy.addJunctions)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1 -> dynamicSegmentLengthForSpeedAndAccelerationInMeters1(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, maxSegmentTickCount, segmentationBy.addJunctions)
-        Segmentation.Type.SLIDING_WINDOW_MULTISTART_METERS -> slidingWindowMultiStartMeters(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue, segmentationBy.addJunctions)
-        Segmentation.Type.SLIDING_WINDOW_MULTISTART_SECONDS -> slidingWindowMultiStartSeconds(simulationRuns, segmentationBy.value, segmentationBy.secondaryValue, segmentationBy.tertiaryValue, segmentationBy.addJunctions)
+        Segmentation.Type.SLIDING_WINDOW_MULTISTART_METERS -> slidingWindowMultiStartMeters(simulationRuns, segmentationBy.valueList, segmentationBy.addJunctions)
+        Segmentation.Type.SLIDING_WINDOW_MULTISTART_SECONDS -> slidingWindowMultiStartSeconds(simulationRuns, segmentationBy.valueList, segmentationBy.addJunctions)
+        Segmentation.Type.SLIDING_WINDOW_MULTISTART_SPEED -> slidingWindowMultiStartSpeed(simulationRuns, segmentationBy.valueList, segmentationBy.secondaryValueList, maxSegmentTickCount, segmentationBy.addJunctions)
+        Segmentation.Type.SLIDING_WINDOW_MULTISTART_SPEED_ACCELERATION1 -> slidingWindowMultiStartSpeedAndAcceleration1(simulationRuns, segmentationBy.valueList, maxSegmentTickCount, segmentationBy.addJunctions)
         //==============================================================================================================
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION -> dynamicSegmentLengthForAccelerationInMeters(simulationRuns, segmentationBy.value, maxSegmentTickCount)
         Segmentation.Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2 -> dynamicSegmentLengthForSpeedAndAccelerationInMeters2(simulationRuns, segmentationBy.value, maxSegmentTickCount)
@@ -695,19 +697,14 @@ fun dynamicSegmentLengthForSpeedAndAccelerationInMeters2(
 
 fun slidingWindowMultiStartMeters(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
-    windowSize1: Double,
-    windowSize2: Double,
-    windowSize3: Double,
+    windowSizes: List<Double>,
     extendByJunctions: Boolean
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
-    val windowSizes = mutableListOf(windowSize1, windowSize2, windowSize3)
 
     simulationRuns.forEach { (simulationRunId, simulationRun) ->
         windowSizes.forEach { size ->
-            //standard overlap of 75%
-            val stepSize = max((size*0.25),1.0)
-            segments.addAll(slideMeterWindowOverRun(simulationRun, simulationRunId, size, stepSize, extendByJunctions))
+            segments.addAll(slideMeterWindowOverRun(simulationRun, simulationRunId, size, 2.0, extendByJunctions))
         }
     }
 
@@ -716,20 +713,48 @@ fun slidingWindowMultiStartMeters(
 
 fun slidingWindowMultiStartSeconds(
     simulationRuns: MutableList<Pair<String, List<TickData>>>,
-    windowSize1: Double,
-    windowSize2: Double,
-    windowSize3: Double,
+    windowSizes: List<Double>,
     extendByJunctions: Boolean
 ): MutableList<Segment> {
     val segments = mutableListOf<Segment>()
-    val windowSizes = mutableListOf(windowSize1, windowSize2, windowSize3)
 
     simulationRuns.forEach { (simulationRunId, simulationRun) ->
         windowSizes.forEach { size ->
-            //standard overlap of 75%
-            val stepSize = max((size*0.25),1.0)
-            segments.addAll(slideSecondWindowOverRun(simulationRun, simulationRunId, size, stepSize, extendByJunctions))
+            segments.addAll(slideSecondWindowOverRun(simulationRun, simulationRunId, size, 2.0, extendByJunctions))
         }
+    }
+
+    return segments
+}
+
+fun slidingWindowMultiStartSpeed(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    lookaheads: List<Double>,
+    scalars: List<Double>,
+    maxSegmentTickCount: Int,
+    extendByJunctions: Boolean
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+
+    for(i in lookaheads.indices){
+        val lookAhead = lookaheads[i]
+        val scalar = scalars[i]
+        segments.addAll(dynamicSegmentLengthForSpeedInMeters(simulationRuns, lookAhead, scalar, 2.0, maxSegmentTickCount, extendByJunctions))
+    }
+
+    return segments
+}
+
+fun slidingWindowMultiStartSpeedAndAcceleration1(
+    simulationRuns: MutableList<Pair<String, List<TickData>>>,
+    lookaheads: List<Double>,
+    maxSegmentTickCount: Int,
+    extendByJunctions: Boolean
+): MutableList<Segment> {
+    val segments = mutableListOf<Segment>()
+
+    lookaheads.forEach { lookAhead ->
+        segments.addAll(dynamicSegmentLengthForSpeedAndAccelerationInMeters1(simulationRuns, lookAhead, 2.0, maxSegmentTickCount, extendByJunctions))
     }
 
     return segments

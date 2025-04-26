@@ -1,7 +1,5 @@
 package tools.aqua.stars.data.av.dataclasses
 
-import kotlin.math.max
-
 class Segmentation() {
     var type: Type = Type.BY_BLOCK
         private set
@@ -13,12 +11,18 @@ class Segmentation() {
         private set
     var addJunctions: Boolean = false
         private set
+    var valueList: List<Double> = listOf()
+        private set
+    var secondaryValueList: List<Double> = listOf()
+        private set
 
-    constructor(type: Type = Type.BY_BLOCK, value: Double = 0.0, secondaryValue: Double = 0.0, tertiaryValue: Double = 0.0, addJunctions: Boolean = false) : this() {
+    constructor(type: Type = Type.BY_BLOCK, value: Double = 0.0, secondaryValue: Double = 0.0, tertiaryValue: Double = 0.0, valueList: List<Double> = listOf(), secondaryValueList: List<Double> = listOf(), addJunctions: Boolean = false) : this() {
         this.type = type
         this.value = value
         this.secondaryValue = secondaryValue
         this.tertiaryValue = tertiaryValue
+        this.valueList = valueList
+        this.secondaryValueList = secondaryValueList
         this.addJunctions = addJunctions
     }
 
@@ -28,8 +32,10 @@ class Segmentation() {
         private fun STATIC_SEGMENT_LENGTH_METERS(windowSize: Double, stepSize: Double): Segmentation = Segmentation(type = Type.STATIC_SEGMENT_LENGTH_METERS, value = windowSize, secondaryValue = stepSize)
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(lookAhead: Double, scalar: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED, value = lookAhead, secondaryValue = scalar, tertiaryValue = stepSize)
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(lookAhead: Double, stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1, value = lookAhead, secondaryValue = stepSize)
-        private fun SLIDING_WINDOW_MULTISTART_METERS(windowSize1: Double, windowSize2: Double, windowSize3: Double): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_METERS, value = windowSize1, secondaryValue = windowSize2, tertiaryValue = windowSize3)
-        private fun SLIDING_WINDOW_MULTISTART_SECONDS(windowSize1: Double, windowSize2: Double, windowSize3: Double): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_SECONDS, value = windowSize1, secondaryValue = windowSize2, tertiaryValue = windowSize3)
+        private fun SLIDING_WINDOW_MULTISTART_METERS(windowSizes: List<Double>): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_METERS, valueList = windowSizes)
+        private fun SLIDING_WINDOW_MULTISTART_SECONDS(windowSizes: List<Double>): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_SECONDS, valueList = windowSizes)
+        private fun SLIDING_WINDOW_MULTISTART_SPEED(lookaheads: List<Double>, scalars: List<Double>): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_SPEED, valueList = lookaheads, secondaryValueList = scalars)
+        private fun SLIDING_WINDOW_MULTISTART_SPEED_ACCELERATION1(lookaheads: List<Double>): Segmentation = Segmentation(type = Type.SLIDING_WINDOW_MULTISTART_SPEED_ACCELERATION1, valueList = lookaheads)
         //==============================================================================================================
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION(stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION, value = stepSize)
         private fun DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2(stepSize: Double): Segmentation = Segmentation(type = Type.DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2, value = stepSize)
@@ -53,14 +59,16 @@ class Segmentation() {
         private fun SLIDING_WINDOW_ROTATING(stepSize: Double, addJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_ROTATING, secondaryValue = stepSize, addJunctions = addJunctions)
         private fun SLIDING_WINDOW_BY_TRAFFIC_DENSITY(stepSize: Double, addJunctions: Boolean): Segmentation = Segmentation(Type.SLIDING_WINDOW_BY_TRAFFIC_DENSITY, secondaryValue = stepSize, addJunctions = addJunctions)
 
-        fun fromConsole(segmentationType: String, segmentationValue: Double?, secondarySegmentationValue: Double?, tertiarySegmentationValue: Double?, addJunctions: Boolean): Segmentation {
+        fun fromConsole(segmentationType: String, segmentationValue: Double?, secondarySegmentationValue: Double?, tertiarySegmentationValue: Double?, valueList: List<Double>?, secondaryValueList: List<Double>?, addJunctions: Boolean): Segmentation {
             return when (segmentationType) {
-                "STATIC_SEGMENT_LENGTH_SECONDS" -> STATIC_SEGMENT_LENGTH_SECONDS(segmentationValue?: 60.0, secondarySegmentationValue?: 10.0)
-                "STATIC_SEGMENT_LENGTH_METERS" -> STATIC_SEGMENT_LENGTH_METERS(segmentationValue?: 70.0, secondarySegmentationValue?: 5.0)
-                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(segmentationValue?: 2.0, secondarySegmentationValue?: 0.0, tertiarySegmentationValue?: 5.0)
-                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(segmentationValue?: 30.0, secondarySegmentationValue?: 5.0)
-                "SLIDING_WINDOW_MULTISTART_METERS" -> SLIDING_WINDOW_MULTISTART_METERS(segmentationValue?: 65.0, secondarySegmentationValue?: 70.0, tertiarySegmentationValue?: 75.0)
-                "SLIDING_WINDOW_MULTISTART_SECONDS" -> SLIDING_WINDOW_MULTISTART_SECONDS(segmentationValue?: 55.0, secondarySegmentationValue?: 60.0, tertiarySegmentationValue?: 65.0)
+                "STATIC_SEGMENT_LENGTH_SECONDS" -> STATIC_SEGMENT_LENGTH_SECONDS(segmentationValue?: 60.0, secondarySegmentationValue?: 2.0)
+                "STATIC_SEGMENT_LENGTH_METERS" -> STATIC_SEGMENT_LENGTH_METERS(segmentationValue?: 70.0, secondarySegmentationValue?: 2.0)
+                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED(segmentationValue?: 2.0, secondarySegmentationValue?: 0.0, tertiarySegmentationValue?: 2.0)
+                "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1(segmentationValue?: 30.0, secondarySegmentationValue?: 2.0)
+                "SLIDING_WINDOW_MULTISTART_METERS" -> SLIDING_WINDOW_MULTISTART_METERS(valueList?: listOf(8.0))
+                "SLIDING_WINDOW_MULTISTART_SECONDS" -> SLIDING_WINDOW_MULTISTART_SECONDS(valueList?: listOf(2.5))
+                "SLIDING_WINDOW_MULTISTART_SPEED" -> SLIDING_WINDOW_MULTISTART_SPEED(valueList?: listOf(8.0), secondaryValueList?: listOf(0.0))
+                "SLIDING_WINDOW_MULTISTART_SPEED_ACCELERATION1" -> SLIDING_WINDOW_MULTISTART_SPEED_ACCELERATION1(valueList?: listOf(0.5))
                 //======================================================================================================
                 "DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION" -> DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION(segmentationValue?: 5.0)
                 "DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2" -> DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2(segmentationValue?: 5.0)
@@ -95,6 +103,8 @@ class Segmentation() {
         DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_1,
         SLIDING_WINDOW_MULTISTART_METERS,
         SLIDING_WINDOW_MULTISTART_SECONDS,
+        SLIDING_WINDOW_MULTISTART_SPEED,
+        SLIDING_WINDOW_MULTISTART_SPEED_ACCELERATION1,
         //==============================================================================================================
         DYNAMIC_SEGMENT_LENGTH_METERS_ACCELERATION,
         DYNAMIC_SEGMENT_LENGTH_METERS_SPEED_ACCELERATION_2,
